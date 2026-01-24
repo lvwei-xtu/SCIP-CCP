@@ -44,7 +44,7 @@ cd scip/examples/CCP
 make
 # Back to SCIP root directory
 cd ../..
-# Below are the commands to run different settings (using CCMPP data as an example)
+# Below are the commands to run different settings (using CCMPP instances and epsilon=0.1)
 # run setting B&C+MIX
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
 # run setting B&C+MIX+DI
