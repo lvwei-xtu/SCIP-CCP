@@ -12,9 +12,9 @@ by Wei Lv, Wei-Kun Chen, Yu-Hong Dai, and Xiao-Jiao Tong.
 ├── CCP/                # Source code for the CCP example
 │   ├── CMakeLists.txt  # Build script for the CCP example
 │   └── src/            # C source code for implementing our proposed approaches
-├── data/               # Benchmark instance data used in the manuscript (CCRP, CCMPP, CCLS).
-├── settings/           # Parameter setting files for running different solver configurations. (.set)
-└── numerical-results/  # Logfiles produced by our numerical experiments.
+├── data/               # Benchmark instance data used in the manuscript (CCRP, CCMPP, CCLS)
+├── settings/           # Parameter setting files for running different solver configurations (.set)
+└── numerical-results/  # Logfiles produced by our numerical experiments
 ```
 
 ## Installation
