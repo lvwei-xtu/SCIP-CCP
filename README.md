@@ -26,9 +26,9 @@ In order to run this code, you must install **SCIPOptSuite 9.1.0** from [https:/
 cd scipoptsuite-9.1.0
 # Download this repository
 # Move the CCP folder into SCIP examples
-mv -r CCP scip/examples
+mv CCP scip/examples
 # Add the example in the examples CMakeLists
-cd  scip/examples
+cd scip/examples
 vim CMakeLists.txt
 # Insert the following line:
 #   add_subdirectory(CCP EXCLUDE_FROM_ALL)
