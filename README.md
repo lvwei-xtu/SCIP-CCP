@@ -9,9 +9,9 @@ by Wei Lv, Wei-Kun Chen, Yu-Hong Dai, and Xiao-Jiao Tong.
 
 ```text
 .
-├── CCP/                # Source code of the CCP example
+├── CCP/                # Source code for the CCP example
 │   ├── CMakeLists.txt  # Build script for the CCP example
-│   └── src/            # C source code of the method implementation
+│   └── src/            # C source code for implementing our proposed approaches
 ├── data/               # Benchmark instance data used in the manuscript (CCRP, CCMPP, CCLS).
 ├── settings/           # Parameter setting files for running different solver configurations. (.set)
 └── numerical-results/  # Logfiles produced by our numerical experiments.
