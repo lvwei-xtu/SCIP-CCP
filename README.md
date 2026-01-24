@@ -57,3 +57,7 @@ cd ../..
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
 # run setting DB+EOPF
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
+``````
+
+## Detailed Statistics 
+Detailed statistics of instance-wise computational results can be found in the online supplement available at [https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link).
