@@ -1,7 +1,7 @@
 # Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side
 
-This repository contains the code and data to the manuscript
-&nbsp;&nbsp;&nbsp;&nbsp;**Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side**
+This repository contains the code and data to the manuscript <br>
+&nbsp;&nbsp;&nbsp;&nbsp;**Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side** <br>
 by Wei Lv, Wei-Kun Chen, Yu-Hong Dai, and Xiao-Jiao Tong.
 
 ## Repository Structure
