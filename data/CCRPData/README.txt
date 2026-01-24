@@ -1,4 +1,4 @@
-Format of the data in the CCRPData files:
+Format of the data files in this folder.
 -The file name is ``|I|-|J|-n-k.ccrp'', where |I| and |J| are the numbers of resources and customers, respectively, 
 n is the scenario size, and k is an index for the instance (0,1,2,3,4).
 - In the file:
@@ -9,6 +9,6 @@ n is the scenario size, and k is an index for the instance (0,1,2,3,4).
 	  	\mu_{j|I|}]. A service rate less than zero (-1, specifically) indicates that server is not able to serve that customer
 	   	type.
   - The next line provides an array of costs per server (that data c_i, i=1,...,|I|) 
-	- For each of the following n lines: an array representing the set of customer demands in a scenario. The format of the kth array
+	- For each of the following n lines: each array represents the set of customer demands in a scenario. The format of the kth array
   is [lambda_1^k, lambda_2^k, ..., lambda_|J|^k] (i.e., an array start is indicated by '[', there are then |J| numbers,
   seaparated by commas, and the end of the array is indicated by ']'.)
