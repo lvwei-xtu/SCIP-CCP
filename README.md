@@ -43,10 +43,10 @@ Follow two steps to configure and build the project:
 1. Clone the source code
    ```bash
    git clone https://github.com/lvwei-xtu/SCIP-CCP.git
-   ```
-2. Create a new subdirectory, jump to the new directory and use ```cmake``` specifying your ```SCIP``` directory. For instance, type
+   
+2. Create a new subdirectory, jump to the new directory and configure the project using ```cmake```. For instance, type
    ```bash
-   mkdir build; cd build; cmake ..  -DSCIP_DIR=../scip/build/  -DCMAKE_C_STANDARD=99
+   mkdir build; cd build; cmake .. 
    ```
 and compile using the ```make``` command. For more details, refer to the [SCIP documentation](https://www.scipopt.org/doc-10.0.0/html/START.php).
 
