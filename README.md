@@ -31,18 +31,19 @@ To run this code, you must install **SCIPOptSuite 9.1.0**.
 2. **Build**: Build SCIP using CMake. Detailed instructions can be found in the [SCIP Installation Guide](https://www.scipopt.org/doc-10.0.0/html/md_INSTALL.php).
 
 ### 🛠️ Configuration
+- Clone the source code
 ```bash
-# 1. clone the source code
 git clone https://github.com/lvwei-xtu/SCIP-CCP.git
-# 2. create a new subdirectory, jump to the new directory and use **cmake** specifying your **SCIP** directory. For instance, type
-mkdir bin ; cd bin ; cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
-# 3. compile
-make
 ```
+- Create a new subdirectory, jump to the new directory and use ```cmake``` specifying your ```SCIP``` directory. For instance, type
+```bash
+mkdir bin; cd bin; cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
+```
+and compile using the ```make``` command.
+
 ### 🏃 Usage
 
 Run experiments on **CCMPP** instances (with $\epsilon=0.1$) using the following configurations:
-
 ```bash
 # setting **B&C+MIX**
 ./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
