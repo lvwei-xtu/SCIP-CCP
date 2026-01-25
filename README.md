@@ -6,25 +6,29 @@
 
 ---
 
-### Description 
+### 📖 Description 
 
 This repository contains the source code, instances, and detailed results of the computational experiments conducted for the paper **"Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side"**. 
 
 #### [![arXiv](https://img.shields.io/badge/arXiv-2406.10472-b31b1b.svg)](https://arxiv.org/abs/2406.10472)
 
-### Repository Structure
+### 📂 Repository Structure
 
 ```text
 SCIP-CCP
 ├── CMakeLists.txt      # CMake build configuration script
-|── src/                # Source code for implementing our proposed approaches
+├── src/                # Source code for implementing our proposed approaches
 ├── data/               # Benchmark instances (CCRP, CCMPP, CCLS)
 ├── settings/           # Configuration files with different settings
 └── results/            # Logfiles produced by our computational experiments
 ```
 
-### Installation
-In order to run this code, you must install **SCIPOptSuite 9.1.0** from [https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz](https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz).
+### ⚙️ Installation
+
+To run this code, you must install **SCIPOptSuite 9.1.0**.
+
+1. **Download**: Get the source code from [scipoptsuite-9.1.0.tgz](https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz).
+2. **Build**: Build SCIP using CMake. Detailed instructions can be found in the [SCIP Installation Guide](https://www.scipopt.org/doc-10.0.0/html/md_INSTALL.php).
 
 ### Build and Run
 ```shell
