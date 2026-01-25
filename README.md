@@ -32,31 +32,30 @@ To run this code, you must install **SCIPOptSuite 9.1.0**.
 
 ### 🛠️ Configuration
 ```bash
-# 1. Clone the source code
+# 1. clone the source code
 git clone https://github.com/lvwei-xtu/SCIP-CCP.git
-# 2. Create bin subdirectory in the root directory
-mkdir bin && cd bin
-# 3. Configure
-cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
-# 4. Compile
+# 2. create a new subdirectory, jump to the new directory and use **cmake** specifying your **SCIP** directory. For instance, type
+mkdir bin ; cd bin ; cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
+# 3. compile
 make
 ```
 ### 🏃 Usage
+
 Run experiments on **CCMPP** instances (with $\epsilon=0.1$) using the following configurations:
 
 ```bash
-# B&C+MIX
-./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
-# B&C+MIX+DI
-./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-DI1.set
-# B&C+MIX+sDI
-./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-sDI1.set
-# DB
-./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB1.set
-# DB+OPF
-./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
-# DB+EOPF
-./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
+# setting **B&C+MIX**
+./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
+# setting **B&C+MIX+DI**
+./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-DI1.set
+# setting **B&C+MIX+sDI**
+./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-sDI1.set
+# setting **DB**
+./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB1.set
+# setting **DB+OPF**
+./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
+# setting **DB+EOPF**
+./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
 ```
 
 ### 📊 Detailed computational results
