@@ -40,6 +40,7 @@ mkdir bin && cd bin
 cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
 # 4. Compile
 make
+```
 
 ### 📝 Run
 ```shell
