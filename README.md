@@ -30,30 +30,19 @@ To run this code, you must install **SCIPOptSuite 9.1.0**.
 1. **Download**: Get the source code from [scipoptsuite-9.1.0.tgz](https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz).
 2. **Build**: Build SCIP using CMake. Detailed instructions can be found in the [SCIP Installation Guide](https://www.scipopt.org/doc-10.0.0/html/md_INSTALL.php).
 
-### Build and Run
+### 🛠️ Configuration
+```bash
+# 1. Clone the source code
+git clone https://github.com/lvwei-xtu/SCIP-CCP.git
+# 2. Create bin directory
+mkdir bin && cd bin
+# 3. Configure (Replace /path/to/scip with your actual path)
+cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
+# 4. Compile
+make
+
+### 📝 Run
 ```shell
-# Enter the SCIP root directory
-cd scipoptsuite-9.1.0
-# Download this repository
-# Move the CCP folder into SCIP examples
-mv CCP scip/examples
-# Add the example in the examples CMakeLists
-cd scip/examples
-vim CMakeLists.txt
-# Insert the following line:
-#   add_subdirectory(CCP EXCLUDE_FROM_ALL)
-# Back to SCIP root directory
-cd ../..
-# Build SCIP
-mkdir -p build
-cd build
-cmake ..
-make
-# Build CCP example target
-cd scip/examples/CCP
-make
-# Back to SCIP root directory
-cd ../..
 # Below are the commands to run different settings (using CCMPP instances and epsilon=0.1)
 # run setting B&C+MIX
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
