@@ -15,7 +15,7 @@ This repository contains the source code, instances, and detailed results of the
 ### Repository Structure
 
 ```text
-CCP
+SCIP-CCP
 ├── CMakeLists.txt      # CMake build configuration script
 |── src/                # Source code for implementing our proposed approaches
 ├── data/               # Benchmark instances (CCRP, CCMPP, CCLS)
