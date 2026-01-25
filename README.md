@@ -8,25 +8,25 @@
 
 ### Description 
 
-This repository contains the source code, instances, and detailed results of the computational experiments conducted for the paper "Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side". 
+This repository contains the source code, instances, and detailed results of the computational experiments conducted for the paper **"Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side"**. 
 
-#### [https://arxiv.org/abs/2406.10472](https://arxiv.org/abs/2406.10472)
+#### [![arXiv](https://img.shields.io/badge/arXiv-2406.10472-b31b1b.svg)](https://arxiv.org/abs/2406.10472)
 
-## Repository Structure
+### Repository Structure
 
 ```text
 CCP
-├── CMakeLists.txt      # building CCP
-|── src/                # C source code for implementing our proposed approaches
-├── data/               # Benchmark instance data used in the manuscript (CCRP, CCMPP, CCLS)
-├── settings/           # Parameter setting files for running different solver configurations
+├── CMakeLists.txt      # CMake build configuration script
+|── src/                # Source code for implementing our proposed approaches
+├── data/               # Benchmark instances (CCRP, CCMPP, CCLS)
+├── settings/           # Configuration files with different settings
 └── results/            # Logfiles produced by our computational experiments
 ```
 
-## Installation
+### Installation
 In order to run this code, you must install **SCIPOptSuite 9.1.0** from [https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz](https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz).
 
-## Build and Run
+### Build and Run
 ```shell
 # Enter the SCIP root directory
 cd scipoptsuite-9.1.0
@@ -63,7 +63,7 @@ cd ../..
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
 # run setting DB+EOPF
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
-``````
+```
 
-## Detailed computational results 
+### Detailed computational results 
 Detailed statistics of instance-wise computational results can be found in the online supplement available at [https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link).
