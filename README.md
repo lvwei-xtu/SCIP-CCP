@@ -1,20 +1,25 @@
-# Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side
+# Code, instances, and detailed computational results of the paper: 
 
-## Description
-This repository contains the code and data to the manuscript <br>
-&nbsp;&nbsp;&nbsp;&nbsp;**Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side** <br>
-by Wei Lv, Wei-Kun Chen, Yu-Hong Dai, and Xiao-Jiao Tong.
+### Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side
+
+### Wei Lv, Wei-Kun Chen, Yu-Hong Dai, and Xiao-Jiao Tong
+
+---
+
+This repository contains the code, instances, and detailed results of the computational experiments conducted for the paper "Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side". 
+
+#### [https://arxiv.org/abs/2406.10472](https://arxiv.org/abs/2406.10472)
+
 
 ## Repository Structure
 
 ```text
-.
-├── CCP/                # Source code for the CCP example
-│   ├── CMakeLists.txt  # Build script for the CCP example
-│   └── src/            # C source code for implementing our proposed approaches
+CCP
+├── CMakeLists.txt      # building CCP
+|── src/                # C source code for implementing our proposed approaches
 ├── data/               # Benchmark instance data used in the manuscript (CCRP, CCMPP, CCLS)
 ├── settings/           # Parameter setting files for running different solver configurations
-└── numerical-results/  # Logfiles produced by our numerical experiments
+└── results/            # Logfiles produced by our computational experiments
 ```
 
 ## Installation
