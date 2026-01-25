@@ -52,7 +52,7 @@ and build the executable using the ```make``` command. For more details, refer t
 
 ### 🏃 Usage
 
-- In the root directory, run the following commands for CCMPP instances ($\epsilon=0.1$) under different settings:
+- In the root directory, run the following commands to test the CCMPP instance ```10-1000-0.ccmpp ``` with $\epsilon=0.1$ under different settings:
 
 ```bash
 # setting B&C+MIX
