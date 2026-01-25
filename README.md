@@ -43,19 +43,19 @@ and compile using the ```make``` command.
 
 ### 🏃 Usage
 
-Run experiments on **CCMPP** instances (with $\epsilon=0.1$) using the following configurations:
+Run experiments on **CCMPP** instances (with $\epsilon=0.1$) using the following commands:
 ```bash
-# setting **B&C+MIX**
+# setting B&C+MIX
 ./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
-# setting **B&C+MIX+DI**
+# setting B&C+MIX+DI
 ./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-DI1.set
-# setting **B&C+MIX+sDI**
+# setting B&C+MIX+sDI
 ./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-sDI1.set
-# setting **DB**
+# setting DB
 ./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB1.set
-# setting **DB+OPF**
+# setting DB+OPF
 ./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
-# setting **DB+EOPF**
+# setting DB+EOPF
 ./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
 ```
 
