@@ -30,13 +30,15 @@ To run this code, you must install **SCIPOptSuite 9.1.0**.
 1. **Download**: Get the source code from [scipoptsuite-9.1.0.tgz](https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz).
 2. **Build**: Build SCIP using CMake. Detailed instructions can be found in the [SCIP Installation Guide](https://www.scipopt.org/doc-10.0.0/html/md_INSTALL.php).
 
-### 🛠️ Configuration
+### 🛠️ Configuration & Build
+
+Follow two steps to configure and build the project:
 
 1. Clone the source code
 ```bash
-git clone https://github.com/lvwei-xtu/SCIP-CCP.git
+git clone [https://github.com/lvwei-xtu/SCIP-CCP.git](https://github.com/lvwei-xtu/SCIP-CCP.git)
 ```
-2. Create a new subdirectory, jump to the new directory and use ```cmake``` specifying your ```SCIP``` directory. For instance, type
+2. Configure and Compile: Create a new subdirectory, jump to the new directory and use ```cmake``` specifying your ```SCIP``` directory. For instance, type
 ```bash
 mkdir bin; cd bin; cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
 ```
