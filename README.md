@@ -56,17 +56,17 @@ and compile using the ```make``` command. For more details, refer to the [SCIP d
 
 ```bash
 # setting B&C+MIX
-./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
 # setting B&C+MIX+DI
-./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-DI1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-DI1.set
 # setting B&C+MIX+sDI
-./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-sDI1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-sDI1.set
 # setting DB
-./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB1.set
 # setting DB+OPF
-./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
 # setting DB+EOPF
-./bin/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
 ```
 
 ### 📊 Detailed computational results
