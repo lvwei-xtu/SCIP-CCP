@@ -34,7 +34,7 @@ To run this code, you must install **SCIPOptSuite 9.1.0**.
 ```bash
 # 1. Clone the source code
 git clone https://github.com/lvwei-xtu/SCIP-CCP.git
-# 2. Create bin directory
+# 2. Create bin subdirectory
 mkdir bin && cd bin
 # 3. Configure (Replace /path/to/scip with your actual path)
 cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
