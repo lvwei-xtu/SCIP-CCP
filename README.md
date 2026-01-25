@@ -70,4 +70,4 @@ and build the executable using the ```make``` command. For more details, refer t
 ```
 
 ### 📊 Detailed computational results
-Detailed statistics of instance-wise computational results can be found in the online supplement available at [View on Google Drive](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link)
+Detailed statistics of instance-wise computational results can be found in the online supplement available at [Google Drive](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link)
