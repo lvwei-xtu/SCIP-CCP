@@ -57,6 +57,7 @@ Run experiments on **CCMPP** instances (with $\epsilon=0.1$) using the following
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
 # DB+EOPF
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
+```
 
 ### 📊 Detailed computational results
 Detailed statistics of instance-wise computational results can be found in the online supplement available at [View on Google Drive](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link)
