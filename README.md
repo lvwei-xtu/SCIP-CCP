@@ -55,7 +55,7 @@ Follow two steps to configure and build the project:
    
 2. Create a new build subdirectory, jump to the new directory and configure the project using ```cmake```. For instance, type
    ```bash
-   mkdir build; cd build; cmake .. 
+   mkdir build; cd build; cmake .. -DCMAKE_C_FLAGS="-std=c99"
    ```
 and build the executable using the ```make``` command. For more details, refer to the [SCIP documentation](https://www.scipopt.org/doc-10.0.0/html/START.php).
 
