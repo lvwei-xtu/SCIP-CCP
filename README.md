@@ -6,11 +6,11 @@
 
 ---
 
+### Description 
+
 This repository contains the source code, instances, and detailed results of the computational experiments conducted for the paper "Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side". 
 
 #### [https://arxiv.org/abs/2406.10472](https://arxiv.org/abs/2406.10472)
-
----
 
 ## Repository Structure
 
