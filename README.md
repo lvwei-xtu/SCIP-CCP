@@ -34,30 +34,29 @@ To run this code, you must install **SCIPOptSuite 9.1.0**.
 ```bash
 # 1. Clone the source code
 git clone https://github.com/lvwei-xtu/SCIP-CCP.git
-# 2. Create bin subdirectory
+# 2. Create bin subdirectory in the root directory
 mkdir bin && cd bin
-# 3. Configure (Replace /path/to/scip with your actual path)
+# 3. Configure
 cmake .. -DSCIP_DIR=../scip/bin -DCMAKE_C_FLAGS="-std=c99"
 # 4. Compile
 make
 ```
+### 🏃 Usage
+Run experiments on **CCMPP** instances (with $\epsilon=0.1$) using the following configurations:
 
-### 📝 Run
-```shell
-# Below are the commands to run different settings (using CCMPP instances and epsilon=0.1)
-# run setting B&C+MIX
+```bash
+# B&C+MIX
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
-# run setting B&C+MIX+DI
+# B&C+MIX+DI
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-DI1.set
-# run setting BnC+MIX+sDI
+# B&C+MIX+sDI
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-sDI1.set
-# run setting DB
+# DB
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB1.set
-# run setting DB+OPF
+# DB+OPF
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
-# run setting DB+EOPF
+# DB+EOPF
 ./build/bin/examples/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
-```
 
-### Detailed computational results 
-Detailed statistics of instance-wise computational results can be found in the online supplement available at [https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link).
+### 📊 Detailed computational results
+Detailed statistics of instance-wise computational results can be found in the online supplement available at [View on Google Drive](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link)
