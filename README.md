@@ -44,11 +44,11 @@ Follow two steps to configure and build the project:
    ```bash
    git clone https://github.com/lvwei-xtu/SCIP-CCP.git
    
-2. Create a new subdirectory, jump to the new directory and configure the project using ```cmake```. For instance, type
+2. Create a new build subdirectory, jump to the new directory and configure the project using ```cmake```. For instance, type
    ```bash
    mkdir build; cd build; cmake .. 
    ```
-and compile using the ```make``` command. For more details, refer to the [SCIP documentation](https://www.scipopt.org/doc-10.0.0/html/START.php).
+and build the executable using the ```make``` command. For more details, refer to the [SCIP documentation](https://www.scipopt.org/doc-10.0.0/html/START.php).
 
 ### 🏃 Usage
 
