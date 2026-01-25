@@ -17,10 +17,10 @@ This repository contains the source code, instances, and detailed results of the
 ```text
 SCIP-CCP
 ├── CMakeLists.txt      # CMake build configuration script
-├── src/                # Source code for implementing our proposed approaches
+├── src/                # Source code for implementing the proposed approaches
 ├── data/               # Benchmark instances (CCRP, CCMPP, CCLS)
 ├── settings/           # Configuration files with different settings
-└── results/            # Logfiles produced by our computational experiments
+└── results/            # Logfiles produced by the computational experiments
 ```
 
 ### 📦 Dependencies & Installation
@@ -31,7 +31,7 @@ To run this code and reproduce the results reported in the paper, you must insta
 2.  **Build**: Compile SCIP using CMake. Detailed instructions can be found in the [SCIP Installation Guide](https://www.scipopt.org/doc-10.0.0/html/md_INSTALL.php).
 3.  **Configure Environment**: Add SCIP to your system path:
       ```bash
-      # Replace <path_to_scip> with your actual installation path
+      # replace <path_to_scip> with your actual installation path
       export SCIP_ROOT=<path_to_scip>/scipoptsuite-9.1.0
       export PATH="$SCIP_ROOT/bin:$PATH"
       ```
@@ -52,7 +52,7 @@ and build the executable using the ```make``` command. For more details, refer t
 
 ### 🏃 Usage
 
-- Run experiments on **CCMPP** instances (with $\epsilon=0.1$) using the following commands:
+- Run experiments on **CCMPP** instances (with $\epsilon=0.1$) in root directory using the following commands:
 
 ```bash
 # setting B&C+MIX
