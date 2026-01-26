@@ -25,7 +25,7 @@ SCIP-CCP
 
 ### 📦 Dependencies & Installation
 
-To run this code and reproduce the results reported in the paper, you must install **SCIPOptSuite 9.1.0**.
+To run this code on a ```Linux``` system and reproduce the results reported in the paper, you must install **SCIPOptSuite 9.1.0**.
 
 **1. Download Source**: Get the source code from [scipoptsuite-9.1.0.tgz](https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz).
 
@@ -49,11 +49,11 @@ and reload your shell configuration using ```source ~/.bashrc``` command.
 
 Follow two steps to configure and build the project:
 
-1. Clone the source code
+1. Clone this repository:
    ```bash
    git clone https://github.com/lvwei-xtu/SCIP-CCP.git
    
-2. Create a new build subdirectory, jump to the new directory and configure the project using ```cmake```. For instance, type
+2. Create a new subdirectory, jump to the new directory and configure the project using ```cmake```. For instance, type
    ```bash
    mkdir build; cd build; cmake .. -DCMAKE_C_FLAGS="-std=c99"
    ```
