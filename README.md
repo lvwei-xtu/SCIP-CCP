@@ -27,7 +27,7 @@ SCIP-CCP
 
 To run this code on a ```Linux``` system and reproduce the results reported in the paper, you must install **SCIPOptSuite 9.1.0**.
 
-**1. Download Source**: Get the source code from [scipoptsuite-9.1.0.tgz](https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz).
+**1. Download Software**: Get the source code from [scipoptsuite-9.1.0.tgz](https://scipopt.org/download/release/scipoptsuite-9.1.0.tgz).
 
 **2. Build SCIP**: Compile SCIP using CMake. Detailed instructions can be found in the [SCIP Installation Guide](https://www.scipopt.org/doc-10.0.0/html/md_INSTALL.php).
 
