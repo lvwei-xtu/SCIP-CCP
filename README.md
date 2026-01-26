@@ -51,7 +51,7 @@ and reload your shell configuration using ```source ~/.bashrc``` command.
 
 ### 🛠️ Configuration & Build
 
-Follow two steps to configure and build the project:
+Follow **two steps** to configure and build the project:
 
 1. Clone this repository:
    ```bash
