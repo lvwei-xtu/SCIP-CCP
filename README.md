@@ -53,11 +53,12 @@ and reload your shell configuration using ```source ~/.bashrc``` command.
 
 Follow **two steps** to configure and build the project:
 
-1. Clone this repository:
+**1.** Clone this repository:
    ```bash
    git clone https://github.com/lvwei-xtu/SCIP-CCP.git
-   
-2. Create a new subdirectory, jump to the new directory and configure the project using ```cmake```. For instance, type
+   ```
+     
+**2.** Create a new subdirectory, jump to the new directory and configure the project using ```cmake```. For instance, type
    ```bash
    mkdir build; cd build; cmake .. -DCMAKE_C_FLAGS="-std=c99"
    ```
