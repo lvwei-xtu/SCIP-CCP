@@ -37,11 +37,9 @@ To run this code and reproduce the results reported in the paper, you must insta
    export SCIP_ROOT=<path_to_scip>/scipoptsuite-9.1.0
    export PATH="$SCIP_ROOT/bin:$PATH"
    ```
-**4. Apply Changes**: Reload your shell configuration:
-   ```bash
-   source ~/.bashrc
-   ```
-**5. Verify Installation**: Confirm the installation by running the following command:
+and reload your shell configuration using ```source ~/.bashrc``` command.
+
+**4. Verify Installation**: Confirm the installation by running the following command:
    ```bash
    scip --version
    ```
