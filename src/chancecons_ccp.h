@@ -30,8 +30,8 @@ SCIP_RETCODE SCIPcreateConsCCP(
    SCIP*                      scip,                      /**< SCIP data structure */
    SCIP_CONS**                cons,                      /**< pointer to hold the created constraint */
    const char*                name,                      /**< name of constraint */
-   SCIP_Bool                  DB,                        /**< should the dominance-based branching be used to solve the problem? */
-   SCIP_Bool                  DB_OPF,                    /**< should the dominance-based branching with overlap-oriented node pruning and variable fixing be used to solve the problem? */
+   SCIP_Bool                  BASE_DB,                   /**< should the dominance-based branching be used to solve the problem? */
+   SCIP_Bool                  BASE_DB_OPF,               /**< should the dominance-based branching with overlap-oriented node pruning and variable fixing be used to solve the problem? */
    SCIP_VAR**                 varz,                      /**< scenario variable z */
    SCIP_VAR**                 varv,                      /**< introducing variable v */
    int                        nScenario,                 /**< number of scenarios */

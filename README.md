@@ -21,6 +21,7 @@ SCIP-CCP
 ├── data/               # Benchmark instances (CCRP, CCMPP, CCLS)
 ├── settings/           # Configuration files with different settings
 └── results/            # Logfiles produced by the computational experiments
+└── scripts/            # shell and awk scripts used to generate the tables in the paper
 ```
 
 ### 📦 Dependencies & Installation
@@ -69,19 +70,28 @@ and build the executable using the ```make``` command. For more details, refer t
 - In the root directory, run the following commands to test the CCMPP instance ```10-1000-0.ccmpp``` with $\epsilon=0.1$ under different settings:
 
 ```bash
-# setting B&C+MIX
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX1.set
-# setting B&C+MIX+DI
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-DI1.set
-# setting B&C+MIX+sDI
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BnC-MIX-sDI1.set
-# setting DB
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB1.set
-# setting DB+OPF
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-OPF1.set
-# setting DB+EOPF
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/DB-EOPF1.set
+# setting BASE
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE1.set
+# setting BASE+DI
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DI1.set
+# setting BASE+sDI
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+sDI1.set
+# setting BASE+DB
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB1.set
+# setting BASE+DB+OPF
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB+OPF1.set
+# setting BASE+DB+EOPF
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB+EOPF1.set
 ```
+
+### 🔁 Replicating
+To reproduce the computational results presented in the paper, please run:
+
+```bash
+awk -f script/CCP.awk -v root=results -v table=all > PaperTables.txt
+```
+
+This command writes the LaTeX source of all paper tables to `PaperTables.txt`. Then, you can copy the tables from `PaperTables.txt` into the [Springer Nature's LaTeX template.](https://www.springernature.com/gp/authors/campaigns/latex-author-support). 
 
 ### 📊 Detailed computational results
 Detailed statistics of instance-wise computational results can be found in the online supplement available at [My Google Drive](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link)

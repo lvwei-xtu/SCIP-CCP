@@ -21,21 +21,21 @@
 
 #define DEFAULT_EPSILON                0.10     /**< default confidence parameter epsilon is 0.10 */
 #define DEFAULT_iSEQUALPROBABILITY     TRUE     /**< by default, all scenarios have an equal probability */
-#define DEFAULT_BnC_MIX_DI             FALSE    /**< by default, do not add dominance inequalities (DI) */
-#define DEFAULT_BnC_MIX_sDI            FALSE    /**< by default, do not use the stronger version of dominance inequalities (sDI) */
-#define DEFAULT_DB       					FALSE    /**< by default, do not use dominance-based branching (DB) */
-#define DEFAULT_DB_OPF       				FALSE    /**< by default, do not use overlap-oriented node pruning and variable fixing (OPF) */
+#define DEFAULT_BASE_DI             	FALSE    /**< by default, do not add dominance inequalities (DI) */
+#define DEFAULT_BASE_sDI            	FALSE    /**< by default, do not use the stronger version of dominance inequalities (sDI) */
+#define DEFAULT_BASE_DB       			FALSE    /**< by default, do not use dominance-based branching (BASE_DB) */
+#define DEFAULT_BASE_DB_OPF       		FALSE    /**< by default, do not use overlap-oriented node pruning and variable fixing (OPF) */
 
 
 struct SCIP_ReaderData
 {
 	SCIP_Real epsilon;      							/**< confidence parameter epsilon */
    SCIP_Bool isEqualProbability; 					/**< TRUE if all scenarios are assumed to have equal probability */
-	SCIP_Bool BnC_MIX_DI;								/**< B&C+MIX+DI: B&C+MIX, i.e., solving formulation (MILP) using the B&C algorithm with the mixing cuts, with the dominance inequalities */
-	SCIP_Bool BnC_MIX_sDI;								/**< B&C+MIX+sDI: solving formulation (MILP) with the stronger version of dominance inequalities*/
-	SCIP_Bool DB;											/**< DB: solving formulation (MILP) using the dominance-based branching where the mixing cuts were also implemented */
-	SCIP_Bool DB_OPF;										/**< DB+OPF: solving formulation (MILP) using the dominance-based branching 
-																		with the overlap-oriented node pruning and variable fixing techniques where the mixing cuts were also implemented */
+	SCIP_Bool BASE_DI;									/**< BASE+DI: BASE, i.e., solving formulation (MILP) using the B&C algorithm with the mixing cuts, with the dominance inequalities */
+	SCIP_Bool BASE_sDI;									/**< BASE+sDI: solving formulation (MILP) with the stronger version of dominance inequalities*/
+	SCIP_Bool BASE_DB;									/**< BASE+DB: solving formulation (MILP) using the dominance-based branching where the mixing cuts were also implemented */
+	SCIP_Bool BASE_DB_OPF;								/**< BASE+DB+OPF: solving formulation (MILP) using the dominance-based branching 
+																	with the overlap-oriented node pruning and variable fixing techniques where the mixing cuts were also implemented */
 };
 
 /** creates the reader data */
@@ -336,10 +336,10 @@ SCIP_RETCODE readFileCCRP(
 	SCIPinfoMessage(scip, NULL, "NumScenario: \t%d\n", *nScenario);
 	SCIPinfoMessage(scip, NULL, "ConfidenceParameter: \t%.2f\n", readerdata->epsilon);
 	SCIPinfoMessage(scip, NULL, "IsEqualProbability: \t%d\n", 	 readerdata->isEqualProbability);
-   SCIPinfoMessage(scip, NULL, "BnC+MIX+DI: \t%d\n", 	 		 readerdata->BnC_MIX_DI);
-   SCIPinfoMessage(scip, NULL, "BnC+MIX+sDI: \t%d\n", 	 readerdata->BnC_MIX_sDI);
-	SCIPinfoMessage(scip, NULL, "DB: \t%d\n",  	 readerdata->DB);
-   SCIPinfoMessage(scip, NULL, "DB+OPF: \t%d\n", 	 readerdata->DB_OPF);
+   SCIPinfoMessage(scip, NULL, "BASE+DI: \t%d\n", 	 		 readerdata->BASE_DI);
+   SCIPinfoMessage(scip, NULL, "BASE+sDI: \t%d\n", 	 	 readerdata->BASE_sDI);
+	SCIPinfoMessage(scip, NULL, "BASE+DB: \t%d\n",  	 	 readerdata->BASE_DB);
+   SCIPinfoMessage(scip, NULL, "BASE+DB+OPF: \t%d\n", 	 readerdata->BASE_DB_OPF);
 		
 	return SCIP_OKAY;
 }
@@ -455,7 +455,7 @@ SCIP_DECL_READERREAD(readerReadCCRP)
 
 	/* aggregation scenario, revise right-hand side vector and probability simultaneously */
 	SCIPinfoMessage(scip, NULL, "Dominance and Aggregation Statistics......\n");
-	if( readerdata->BnC_MIX_sDI || readerdata->DB || readerdata->DB_OPF )
+	if( readerdata->BASE_sDI || readerdata->BASE_DB || readerdata->BASE_DB_OPF )
 	{
 		/* calculate the true dominance ratio */
 		dominanceRatio(scip, stRhs, nScenario, dimension);
@@ -702,11 +702,11 @@ SCIP_DECL_READERREAD(readerReadCCRP)
    }
 
 	/* dominance inequalities */
-	if( readerdata->BnC_MIX_DI == TRUE )
+	if( readerdata->BASE_DI == TRUE )
 	{
 		clock_t GraphTimeStart = clock();
 		SCIPinfoMessage(scip, NULL, "Dominance Inequalities Statistics......\n");
-		if( readerdata->BnC_MIX_sDI == FALSE )
+		if( readerdata->BASE_sDI == FALSE )
 		{
 			/* find all non-redundant dominance inequalities in existing work */
 			findDomIneqs(scip, FALSE, &graph, aggRhs, NULL, 0, nAggScenario, dimension);
@@ -738,7 +738,7 @@ SCIP_DECL_READERREAD(readerReadCCRP)
 							NULL,                   /* array with coefficients of constraint entries */
 							0.0,                    /* left hand side of constraint */
 							SCIPinfinity(scip)) );  /* right hand side of constraint */
-				if( readerdata->BnC_MIX_sDI == FALSE )
+				if( readerdata->BASE_sDI == FALSE )
 				{
 					/* add the vars belonging to field in this row to the constraint */
 					/* var: z[tail] val: 1 */
@@ -762,7 +762,7 @@ SCIP_DECL_READERREAD(readerReadCCRP)
 		}
 	}
 
-	if( readerdata->DB == TRUE || readerdata->DB_OPF == TRUE )
+	if( readerdata->BASE_DB == TRUE || readerdata->BASE_DB_OPF == TRUE )
 	{
 		clock_t TimeStart = clock();
 		SCIPinfoMessage(scip, NULL, "Propagator Statistics......\n");
@@ -776,7 +776,7 @@ SCIP_DECL_READERREAD(readerReadCCRP)
 
 	/* special constraint structrue to use dominance inequalities by propagator */
 	cons = NULL;
-	SCIP_CALL( SCIPcreateConsCCP(scip, &cons, "chance", readerdata->DB, readerdata->DB_OPF,
+	SCIP_CALL( SCIPcreateConsCCP(scip, &cons, "chance", readerdata->BASE_DB, readerdata->BASE_DB_OPF,
 				varz, varv, nAggScenario, dimension, aggProba, epsilon, aggKI, basicAggVarzInd, basicNAggScenario, aggRhs, stRhs,
 				sortAggRhs, sortAggRhsInd, graph.vIn, graph.vInSize, graph.vOut, graph.vOutSize, graph.edgeTH) );
    SCIP_CALL( SCIPaddCons(scip, cons) );
@@ -804,7 +804,7 @@ SCIP_DECL_READERREAD(readerReadCCRP)
 
 	/* free memory of process data arrays */
   	freeProcessData(scip, KI, sortTransRhs, sortTransRhsInd, aggKI, sortAggRhs, sortAggRhsInd, aggProba, dimension);
-	if( readerdata->BnC_MIX_DI == TRUE || readerdata->DB == TRUE || readerdata->DB_OPF )
+	if( readerdata->BASE_DI == TRUE || readerdata->BASE_DB == TRUE || readerdata->BASE_DB_OPF )
    {
       /* free memory of graph data arrays */
 	   freeGraph(scip, &graph, nAggScenario);
@@ -858,20 +858,20 @@ SCIP_RETCODE SCIPincludeReaderCCRP(
 				&readerdata->isEqualProbability, FALSE, DEFAULT_iSEQUALPROBABILITY, NULL, NULL) );
 
 	SCIP_CALL( SCIPaddBoolParam(scip,
-				"reading/" READER_NAME "/BnC_MIX_DI", "solving formulation (MILP) using the B&C algorithm with the mixing cuts and the dominance inequalities",
-				&readerdata->BnC_MIX_DI, FALSE, DEFAULT_BnC_MIX_DI, NULL, NULL) );
+				"reading/" READER_NAME "/BASE_DI", "solving formulation (MILP) using the B&C algorithm with the mixing cuts and the dominance inequalities",
+				&readerdata->BASE_DI, FALSE, DEFAULT_BASE_DI, NULL, NULL) );
 
 	SCIP_CALL( SCIPaddBoolParam(scip,
-            "reading/" READER_NAME "/BnC_MIX_sDI", "solving formulation (MILP) using the B&C algorithm with the mixing cuts and the stronger version of dominance inequalities",
-            &readerdata->BnC_MIX_sDI, FALSE, DEFAULT_BnC_MIX_sDI, NULL, NULL) );
+            "reading/" READER_NAME "/BASE_sDI", "solving formulation (MILP) using the B&C algorithm with the mixing cuts and the stronger version of dominance inequalities",
+            &readerdata->BASE_sDI, FALSE, DEFAULT_BASE_sDI, NULL, NULL) );
 
 	SCIP_CALL( SCIPaddBoolParam(scip,
-			"reading/" READER_NAME "/DB", "solving formulation (MILP) using the dominance-based branching where the mixing cuts were also implemented",
-			&readerdata->DB, FALSE, DEFAULT_DB, NULL, NULL) );
+			"reading/" READER_NAME "/BASE_DB", "solving formulation (MILP) using the dominance-based branching where the mixing cuts were also implemented",
+			&readerdata->BASE_DB, FALSE, DEFAULT_BASE_DB, NULL, NULL) );
 
 	SCIP_CALL( SCIPaddBoolParam(scip,
-		"reading/" READER_NAME "/DB_OPF", " solving formulation (MILP) using the dominance-based branching with the overlap-oriented node pruning and variable fixing techniques where the mixing cuts were also implemented",
-		&readerdata->DB_OPF, FALSE, DEFAULT_DB_OPF, NULL, NULL) );
+		"reading/" READER_NAME "/BASE_DB_OPF", " solving formulation (MILP) using the dominance-based branching with the overlap-oriented node pruning and variable fixing techniques where the mixing cuts were also implemented",
+		&readerdata->BASE_DB_OPF, FALSE, DEFAULT_BASE_DB_OPF, NULL, NULL) );
 
    return SCIP_OKAY;
 }

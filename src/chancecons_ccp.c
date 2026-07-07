@@ -39,7 +39,7 @@
 
 #define DEFAULT_ISCLOSEPROBING     FALSE                      /**< should probing be turned off in domain propagation? */
 #define DEFAULT_TIGHTCONTVARBOUND  TRUE                       /**< should the bounds of the continue variable v be updated in the domain propagation? */
-#define DEFAULT_DB_EOPF            FALSE                      /**< should the exact approach for implementing overlap-oriented node pruning and variable fixing be used in domain propagation? */
+#define DEFAULT_BASE_DB_EOPF       FALSE                      /**< should the exact approach for implementing overlap-oriented node pruning and variable fixing be used in domain propagation? */
 
 /*
  * Data structures
@@ -48,8 +48,8 @@
 /** constraint data for chance constraints */
 struct SCIP_ConsData
 {
-   SCIP_Bool                  DB;                             /**< should the dominance-based branching be used to solve the problem? */
-   SCIP_Bool                  DB_OPF;                         /**< should the the dominance-based branching with overlap-oriented node pruning and variable fixing be used to solve the problem? */
+   SCIP_Bool                  BASE_DB;                        /**< should the dominance-based branching be used to solve the problem? */
+   SCIP_Bool                  BASE_DB_OPF;                    /**< should the the dominance-based branching with overlap-oriented node pruning and variable fixing be used to solve the problem? */
    SCIP_VAR**                 varz;                           /**< scenario variable z */
    SCIP_VAR**                 varv;                           /**< introducing variable v */
    int                        nScenario;                      /**< number of scenarios */
@@ -98,7 +98,7 @@ struct SCIP_ConshdlrData
 {
    SCIP_Bool   isCloseProbing;                                /**< should probing be turned off in domain propagation? */
    SCIP_Bool   tightContVarBound;                             /**< should the bounds of the continue variable v be updated in the domain propagation? */
-   SCIP_Bool   DB_EOPF;                                       /**< should the exact approach for implementing overlap-oriented node pruning and variable fixing be used in domain propagation? */
+   SCIP_Bool   BASE_DB_EOPF;                                  /**< should the exact approach for implementing overlap-oriented node pruning and variable fixing be used in domain propagation? */
 };
 
 
@@ -159,8 +159,8 @@ SCIP_RETCODE consdataCreate(
    SCIP*                      scip,                           /**< SCIP data structure */
    SCIP_CONSDATA**            consdata,                       /**< pointer to store the constraint data */
    SCIP_CONSHDLR*             conshdlr,                       /**< constraint handler data */
-   SCIP_Bool                  DB,                             /**< should the dominance-based branching be used to solve the problem? */
-   SCIP_Bool                  DB_OPF,                         /**< should the dominance-based branching with overlap-oriented node pruning and variable fixing be used to solve the problem? */
+   SCIP_Bool                  BASE_DB,                        /**< should the dominance-based branching be used to solve the problem? */
+   SCIP_Bool                  BASE_DB_OPF,                    /**< should the dominance-based branching with overlap-oriented node pruning and variable fixing be used to solve the problem? */
    SCIP_VAR**                 varz,                           /**< scenario variable z */
    SCIP_VAR**                 varv,                           /**< introducing variable v */
    int                        nScenario,                      /**< number of scenarios */
@@ -203,8 +203,8 @@ SCIP_RETCODE consdataCreate(
    (*consdata)->cutoffTimesAOPF    = 0;
 
    /* initialization input data */
-   (*consdata)->DB  = DB;
-   (*consdata)->DB_OPF = DB_OPF;
+   (*consdata)->BASE_DB          = BASE_DB;
+   (*consdata)->BASE_DB_OPF      = BASE_DB_OPF;
    (*consdata)->nScenario        = nScenario;
    (*consdata)->dimension        = dimension;
    (*consdata)->basicNScenario   = basicNScenario;
@@ -256,7 +256,7 @@ SCIP_RETCODE consdataCreate(
          (*consdata)->randomRhs[i][j] = randomRhs[i][j];
       }
    }
-   if( DB || DB_OPF )
+   if( BASE_DB || BASE_DB_OPF )
    {
       SCIP_CALL( SCIPallocBlockMemoryArray(scip, &((*consdata)->vOut),    basicNScenario) );
       SCIP_CALL( SCIPallocBlockMemoryArray(scip, &((*consdata)->vIn),     basicNScenario) );
@@ -291,7 +291,7 @@ SCIP_RETCODE consdataCreate(
       }
    }
 
-   if( DB_OPF == TRUE )
+   if( BASE_DB_OPF == TRUE )
    {
       SCIP_CALL(SCIPallocBlockMemoryArray(scip, &((*consdata)->MiBeg), basicNScenario));
       SCIP_CALL(SCIPallocBlockMemoryArray(scip, &((*consdata)->roundMiBeg), basicNScenario));
@@ -332,7 +332,7 @@ SCIP_DECL_CONSDELETE(consDeleteCCP)
    basicNScenario = (*consdata)->basicNScenario;
    dimension      = (*consdata)->dimension;
 
-   if( (*consdata)->DB || (*consdata)->DB_OPF ) 
+   if( (*consdata)->BASE_DB || (*consdata)->BASE_DB_OPF ) 
    {
       for( i = 0; i < basicNScenario; ++i )
       {
@@ -347,7 +347,7 @@ SCIP_DECL_CONSDELETE(consDeleteCCP)
       SCIPfreeBlockMemoryArray(scip, &((*consdata)->vInSize),  basicNScenario);
    }
 
-   if( (*consdata)->DB_OPF == TRUE )
+   if( (*consdata)->BASE_DB_OPF == TRUE )
    {
       for( i = 0; i < basicNScenario; ++i )
       {
@@ -409,7 +409,7 @@ SCIP_DECL_CONSTRANS(consTransCCP)
    assert(sourcedata != NULL);
 
    /* create constraint data for target constraint */
-   SCIP_CALL( consdataCreate(scip, &consdata, conshdlr, sourcedata->DB, sourcedata->DB_OPF,
+   SCIP_CALL( consdataCreate(scip, &consdata, conshdlr, sourcedata->BASE_DB, sourcedata->BASE_DB_OPF,
                sourcedata->varz, sourcedata->varv, sourcedata->nScenario, sourcedata->dimension, sourcedata->proba,
                sourcedata->epsilon, sourcedata->KI, sourcedata->basicVarzInd, sourcedata->basicNScenario, sourcedata->randomRhs,
                sourcedata->stRhs, sourcedata->sortTransRhs, sourcedata->sortTransRhsInd, sourcedata->vIn, sourcedata->vInSize,
@@ -454,8 +454,8 @@ SCIP_DECL_CONSCOPY(consCopyCCP)
    SCIP_CONSDATA* sourcedata;
    SCIP_VAR**     sourcevarz;
    SCIP_VAR**     sourcevarv;
-   SCIP_Bool      DB;
-   SCIP_Bool      DB_OPF;
+   SCIP_Bool      BASE_DB;
+   SCIP_Bool      BASE_DB_OPF;
    SCIP_VAR**     varz;
    SCIP_VAR**     varv;
    int            nScenario;
@@ -488,8 +488,8 @@ SCIP_DECL_CONSCOPY(consCopyCCP)
    sourcedata = SCIPconsGetData(sourcecons);
    assert( sourcedata != NULL );
 
-   DB                 = sourcedata->DB;
-   DB_OPF             = sourcedata->DB_OPF;
+   BASE_DB            = sourcedata->BASE_DB;
+   BASE_DB_OPF        = sourcedata->BASE_DB_OPF;
    sourcevarz         = sourcedata->varz;
    sourcevarv         = sourcedata->varv;
    nScenario          = sourcedata->nScenario;
@@ -534,7 +534,7 @@ SCIP_DECL_CONSCOPY(consCopyCCP)
          name = SCIPconsGetName(sourcecons);
       }
       /* create copied constraint */
-      SCIP_CALL( SCIPcreateConsCCP(scip, cons, name, DB, DB_OPF, varz, varv,
+      SCIP_CALL( SCIPcreateConsCCP(scip, cons, name, BASE_DB, BASE_DB_OPF, varz, varv,
                nScenario, dimension, proba, epsilon, KI, basicVarzInd, basicNScenario, randomRhs, stRhs,
 					sortTransRhs, sortTransRhsInd, vIn, vInSize, vOut, vOutSize, edgeTH) );
    }
@@ -1674,7 +1674,7 @@ SCIP_RETCODE overlapNodePruneVarFix(
    }
 
    /* step2: the exact approach for implementing overlap-oriented node pruning and variable fixing */
-   if( conshdlrdata->DB_EOPF == TRUE && (*cutoff) == FALSE && Queuefree.size > 0 && Queueone.size > 0 && !SCIPinProbing(scip) && !(SCIPgetSubscipDepth(scip) > 0) )
+   if( conshdlrdata->BASE_DB_EOPF == TRUE && (*cutoff) == FALSE && Queuefree.size > 0 && Queueone.size > 0 && !SCIPinProbing(scip) && !(SCIPgetSubscipDepth(scip) > 0) )
    {
       clock_t exactTimeStart = clock();
 
@@ -1809,11 +1809,11 @@ SCIP_RETCODE dominanceBranchWithOPF(
 
    nfixedvars = 0;
    cutoff = FALSE;
-   if( consdata->DB == TRUE )
+   if( consdata->BASE_DB == TRUE )
    {
       SCIP_CALL( dominanceBranch(scip, consdata, basicVarzInd, &nfixedvars, &cutoff) );
    }
-   else if( consdata->DB_OPF == TRUE )
+   else if( consdata->BASE_DB_OPF == TRUE )
    {
       SCIP_CALL( overlapNodePruneVarFix(scip, consdata, conshdlrdata, basicVarzInd, &nfixedvars, &cutoff) );
    }
@@ -1859,7 +1859,7 @@ SCIP_DECL_CONSPROP(consPropCCP)
       assert(consdata != NULL);
       assert(conshdlrdata != NULL);
 
-      if( consdata->DB || consdata->DB_OPF )
+      if( consdata->BASE_DB || consdata->BASE_DB_OPF )
       {
          /* do not run again in repropagation, since the path to the root might have changed */
          if( SCIPinRepropagation(scip) )
@@ -2344,8 +2344,8 @@ SCIP_RETCODE SCIPincludeConshdlrCCP(
             &conshdlrdata->tightContVarBound, FALSE, DEFAULT_TIGHTCONTVARBOUND, NULL, NULL) );
 
    SCIP_CALL( SCIPaddBoolParam(scip,
-            "constraints/" CONSHDLR_NAME "/DB_EOPF", "should the exact approach for implementing overlap-oriented node pruning and variable fixing be used in domain propagation?",
-            &conshdlrdata->DB_EOPF, FALSE, DEFAULT_DB_EOPF, NULL, NULL) );
+            "constraints/" CONSHDLR_NAME "/BASE_DB_EOPF", "should the exact approach for implementing overlap-oriented node pruning and variable fixing be used in domain propagation?",
+            &conshdlrdata->BASE_DB_EOPF, FALSE, DEFAULT_BASE_DB_EOPF, NULL, NULL) );
 
    return SCIP_OKAY;
 }
@@ -2356,8 +2356,8 @@ SCIP_RETCODE SCIPcreateConsCCP(
    SCIP*                      scip,                           /**< SCIP data structure */
    SCIP_CONS**                cons,                           /**< pointer to hold the created constraint */
    const char*                name,                           /**< name of constraint */
-   SCIP_Bool                  DB,                             /**< should the dominance-based branching be used to solve the problem? */
-   SCIP_Bool                  DB_OPF,                         /**< should the dominance-based branching with overlap-oriented node pruning and variable fixing be used to solve the problem? */
+   SCIP_Bool                  BASE_DB,                        /**< should the dominance-based branching be used to solve the problem? */
+   SCIP_Bool                  BASE_DB_OPF,                    /**< should the dominance-based branching with overlap-oriented node pruning and variable fixing be used to solve the problem? */
    SCIP_VAR**                 varz,                           /**< scenario variable z */
    SCIP_VAR**                 varv,                           /**< introducing variable v */
    int                        nScenario,                      /**< number of scenarios */
@@ -2390,7 +2390,7 @@ SCIP_RETCODE SCIPcreateConsCCP(
    }
 
    /* create constraint data */
-   SCIP_CALL( consdataCreate(scip, &consdata, conshdlr, DB, DB_OPF, varz, varv,
+   SCIP_CALL( consdataCreate(scip, &consdata, conshdlr, BASE_DB, BASE_DB_OPF, varz, varv,
                nScenario, dimension, proba, epsilon, KI, basicVarzInd, basicNScenario, randomRhs, stRhs,
 					sortTransRhs, sortTransRhsInd, vIn, vInSize, vOut, vOutSize, edgeTH) );
 
