@@ -86,11 +86,9 @@ and build the executable using the ```make``` command. For more details, refer t
 
 ### 🔁 Replicating
 To reproduce the computational results presented in the paper, please run:
-
 ```bash
 awk -f script/CCP.awk -v root=results -v table=all > PaperTables.txt
 ```
-
 This command writes the LaTeX source of all paper tables to `PaperTables.txt`. Then, you can copy the tables from `PaperTables.txt` into the [Springer Nature's LaTeX template.](https://www.springernature.com/gp/authors/campaigns/latex-author-support). 
 
 ### 📊 Detailed computational results
