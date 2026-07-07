@@ -21,7 +21,7 @@
 
 
 /** finds and validates the explicitly provided settings file */
-static SCIP_RETCODE requireSettingsFile(
+static SCIP_RETCODE checkSettingsFile(
    int                         argc,                   /**< number of shell parameters */
    char**                      argv,                   /**< array with shell parameters */
    const char**                settingsfile            /**< settings file name */
@@ -118,7 +118,7 @@ static SCIP_RETCODE runShell(
 	/**********************************
 	 * Process command line arguments *
 	 **********************************/
-	SCIP_CALL( requireSettingsFile(argc, argv, &settingsfile) );
+	SCIP_CALL( checkSettingsFile(argc, argv, &settingsfile) );
 	SCIP_CALL( SCIPprocessShellArguments(scip, argc, argv, defaultsetname) );
 
 	/********************
