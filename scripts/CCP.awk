@@ -106,7 +106,6 @@ function first_token(s, a) {
    return a[1]
 }
 
-
 function normalize_setting(s) {
    if (s == "BASE")
       return "BnC-MIX"
@@ -248,6 +247,7 @@ function commit_record(   key, scendenom, st) {
    add_problem(current_name, current_prob, current_m)
    key = current_name SUBSEP current_method
    probfile[key] = 1
+   delete badfile[key]
 
    pb[key] = tmpobjval
    db[key] = tmpbestobjval
@@ -277,6 +277,23 @@ function commit_record(   key, scendenom, st) {
 
    st = (flag == 0) ? "stopped" : "ok"
    status[key] = st
+   current_committed = 1
+}
+
+function commit_incomplete_record(   key) {
+   if (skipfile || current_name == "" || current_method == "")
+      return
+
+   add_problem(current_name, current_prob, current_m)
+   key = current_name SUBSEP current_method
+   if (!(key in probfile))
+      badfile[key] = 1
+}
+
+function finish_uncommitted_file() {
+   if (current_file_started && !current_committed)
+      commit_incomplete_record()
+   current_file_started = 0
 }
 
 function method_limit(method) {
@@ -286,8 +303,11 @@ function method_limit(method) {
 }
 
 FNR == 1 {
+   finish_uncommitted_file()
    reset_metrics()
    parse_result_path(FILENAME)
+   current_file_started = 1
+   current_committed = 0
 }
 
 /read problem / {
@@ -1084,9 +1104,8 @@ function parse_detail_instance(prob, a, len) {
 function detail_sort_key(prob) {
    if (!parse_detail_instance(prob))
       return prob
-   return sprintf("%010.3f|%010.3f|%010.5f|%010.3f|%s", detail_m + 0, detail_n + 0, detail_eps + 0, detail_seed + 0, prob)
+   return sprintf("%010.3f|%010.3f|%010.3f|%010.5f|%010.3f|%s", detail_z + 0, detail_m + 0, detail_n + 0, detail_eps + 0, detail_seed + 0, prob)
 }
-
 function insert_detail_row(prob, sortkey, pos) {
    pos = ++detailrows
    while (pos > 1 && detailsort[pos - 1] > sortkey) {
@@ -1096,6 +1115,12 @@ function insert_detail_row(prob, sortkey, pos) {
    }
    detailsort[pos] = sortkey
    detailrow[pos] = prob
+}
+
+function detail_key_available(key) {
+   if (key in probfile)
+      return probfile[key] == 1
+   return (key in badfile)
 }
 
 function collect_detail_rows(probfilter, method_string, family,   n, i, j, prob, method, key, present) {
@@ -1112,7 +1137,7 @@ function collect_detail_rows(probfilter, method_string, family,   n, i, j, prob,
       for (j = 1; j <= n; ++j) {
          method = detailmethod[j]
          key = prob SUBSEP method
-         if (probfile[key] != 1) {
+         if (!detail_key_available(key)) {
             present = 0
             break
          }
@@ -1126,6 +1151,8 @@ function collect_detail_rows(probfilter, method_string, family,   n, i, j, prob,
 }
 
 function fmt_time_key(key, limit, g) {
+   if (key in badfile)
+      return "--"
    if (!(key in probfile))
       return "--"
    if (timev[key] >= limit) {
@@ -1146,6 +1173,8 @@ function fmt_small0(v) {
 }
 
 function fmt_pt_key(key, limit, dash_on_timeout) {
+   if (key in badfile)
+      return "--"
    if (!(key in probfile))
       return "--"
    if (dash_on_timeout && timev[key] >= limit && chancetime[key] >= 0.1)
@@ -1156,12 +1185,16 @@ function fmt_pt_key(key, limit, dash_on_timeout) {
 }
 
 function fmt_f_key(key) {
+   if (key in badfile)
+      return "--"
    if (!(key in probfile) || nodes[key] <= 0)
       return "0"
    return sprintf("%d", round(detaildomreds[key] / nodes[key]))
 }
 
 function fmt_pn_key(key) {
+   if (key in badfile)
+      return "--"
    if (!(key in probfile))
       return "0"
    return sprintf("%d", cutoffs[key])
@@ -1169,7 +1202,7 @@ function fmt_pn_key(key) {
 
 function detail_time_node(prob, method, limit, key) {
    key = prob SUBSEP method
-   if (!(key in probfile)) {
+   if (key in badfile || !(key in probfile)) {
       printf(" & -- & --")
       return
    }
@@ -1183,17 +1216,56 @@ function detail_pt_f(prob, method, limit, dash_on_timeout, key) {
 
 function detail_dr_pair(prob, method, key) {
    key = prob SUBSEP method
-   if (!(key in probfile)) {
+   if (key in badfile || !(key in probfile)) {
       printf(" & -- & --")
       return
    }
-   printf(" & %s & %s", fmt_small0(dr[key]), fmt_small0(truedr[key]))
+   printf(" & %s & %s", fmt_dr_key(key), fmt_small0(truedr[key]))
 }
 
-function detail_row_start(prob, colcount, mcell, ncell, epscell) {
+function fmt_dr_key(key) {
+   if (key in badfile || !(key in probfile))
+      return "--"
+   return fmt_small0(dr[key])
+}
+
+function detail_prob_from_suffix(suffix) {
+   if (suffix == "rpp")
+      return "CCRP"
+   if (suffix == "lsp")
+      return "CCLS"
+   return "CCMPP"
+}
+
+function detail_first_header(probfilter) {
+   if (probfilter == "CCRP")
+      return "$(|\\mathcal{I}|,|\\mathcal{J}|)$"
+   return "$T$"
+}
+
+function detail_first_value(probfilter) {
+   if (probfilter == "CCRP" && detail_z != "")
+      return "(" detail_z "," detail_m ")"
+   return detail_m
+}
+
+function detail_first_changed(probfilter) {
+   if (!detail_printed)
+      return 1
+   if (probfilter == "CCRP")
+      return detail_z != detail_last_z || detail_m != detail_last_m
+   return detail_m != detail_last_m
+}
+
+function detail_row_start(prob, colcount, probfilter, firstcell, ncell, epscell, firstchanged, nchanged, epschanged) {
    parse_detail_instance(prob)
+   probfilter = detail_prob_from_suffix(detail_suffix)
+   firstchanged = detail_first_changed(probfilter)
+   nchanged = firstchanged || detail_n != detail_last_n
+   epschanged = nchanged || detail_eps != detail_last_eps
+
    if (detail_printed) {
-      if (detail_m != detail_last_m)
+      if (firstchanged)
          print "\t\t\\cmidrule(r){1-" colcount "}"
       else if (detail_n != detail_last_n)
          print "\t\t\\cmidrule(r){2-" colcount "}"
@@ -1201,17 +1273,17 @@ function detail_row_start(prob, colcount, mcell, ncell, epscell) {
          print "\t\t\\cmidrule(r){3-" colcount "}"
    }
 
-   mcell = (!detail_printed || detail_m != detail_last_m) ? detail_m : ""
-   ncell = (!detail_printed || detail_m != detail_last_m || detail_n != detail_last_n) ? detail_n : ""
-   epscell = (!detail_printed || detail_m != detail_last_m || detail_n != detail_last_n || detail_eps != detail_last_eps) ? detail_eps : ""
+   firstcell = firstchanged ? detail_first_value(probfilter) : ""
+   ncell = nchanged ? detail_n : ""
+   epscell = epschanged ? detail_eps : ""
 
-   printf("\t\t%s & %s & %s & %s", mcell, ncell, epscell, detail_seed)
+   printf("\t\t%s & %s & %s & %s", firstcell, ncell, epscell, detail_seed)
+   detail_last_z = detail_z
    detail_last_m = detail_m
    detail_last_n = detail_n
    detail_last_eps = detail_eps
    detail_printed = 1
 }
-
 function prob_text(prob) {
    if (prob == "CCRP")
       return "\\texttt{CCRP}"
@@ -1289,7 +1361,7 @@ function detail_tg_label() {
 function detail_four_begin(probfilter, s) {
    s = prob_suffix(probfilter)
    detail_common_begin("cccc@{\\,}rrrrrrrrr", detail_caption("four", probfilter), "tablefour:detail-" s, "four", probfilter, 13)
-   print "\t\t\\multirow{2}{*}{$m$} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
+   print "\t\t\\multirow{2}{*}{" detail_first_header(probfilter) "} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
    print "\t\t\\multicolumn{2}{c}{\\texttt{BASE}} & \\multicolumn{2}{c}{\\texttt{BASE+DI}} & \\multicolumn{5}{c}{\\texttt{BASE+DB+OPF}} \\\\"
    print "\t\t\\cmidrule(r){5-6} \\cmidrule(r){7-8} \\cmidrule(r){9-13} & & & & " detail_tg_label() " & \\texttt{N} & " detail_tg_label() " & \\texttt{N} & " detail_tg_label() " & \\texttt{N} & \\texttt{PT} & \\texttt{F} & \\texttt{PN} \\\\"
    detail_common_head_end(13)
@@ -1314,7 +1386,7 @@ function print_detail_four(probfilter,   r, prob, key) {
 function detail_one_begin(probfilter, s) {
    s = prob_suffix(probfilter)
    detail_common_begin("cccc@{\\,}rrrrrrrrrrrr", detail_caption("one", probfilter), "tableone:detail-" s, "one", probfilter, 16)
-   print "\t\t\\multirow{2}{*}{$m$} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
+   print "\t\t\\multirow{2}{*}{" detail_first_header(probfilter) "} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
    print "\t\t\\multicolumn{4}{c}{\\texttt{BASE+DB}} & \\multicolumn{4}{c}{\\texttt{BASE+sDI}} & \\multicolumn{4}{c}{\\texttt{BASE+DI}} \\\\"
    print "\t\t\\cmidrule(r){5-8} \\cmidrule(r){9-12} \\cmidrule(r){13-16} & & & & " detail_tg_label() " & \\texttt{N} & \\texttt{PT} & \\texttt{F} & " detail_tg_label() " & \\texttt{N} & \\texttt{\\%DP} & \\texttt{\\%NDI} & " detail_tg_label() " & \\texttt{N} & \\texttt{\\%DP} & \\texttt{\\%NDI} \\\\"
    detail_common_head_end(16)
@@ -1341,7 +1413,7 @@ function print_detail_one(probfilter,   r, prob) {
 function detail_two_begin(probfilter, s) {
    s = prob_suffix(probfilter)
    detail_common_begin("cccc@{\\,}rrrrrrrrr", detail_caption("two", probfilter), "tabletwo:detail-" s, "two", probfilter, 13)
-   print "\t\t\\multirow{2}{*}{$m$} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
+   print "\t\t\\multirow{2}{*}{" detail_first_header(probfilter) "} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
    print "\t\t\\multicolumn{4}{c}{\\texttt{BASE+DB}} & \\multicolumn{5}{c}{\\texttt{BASE+DB+OPF}} \\\\"
    print "\t\t\\cmidrule(r){5-8} \\cmidrule(r){9-13} & & & & " detail_tg_label() " & \\texttt{N} & \\texttt{PT} & \\texttt{F} & " detail_tg_label() " & \\texttt{N} & \\texttt{PT} & \\texttt{F} & \\texttt{PN} \\\\"
    detail_common_head_end(13)
@@ -1366,7 +1438,7 @@ function print_detail_two(probfilter,   r, prob, key) {
 function detail_three_begin(probfilter, s) {
    s = prob_suffix(probfilter)
    detail_common_begin("cccc@{\\,}rrrrrrrrr", detail_caption("three", probfilter), "tablethree:detail-" s, "three", probfilter, 13)
-   print "\t\t\\multirow{2}{*}{$m$} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
+   print "\t\t\\multirow{2}{*}{" detail_first_header(probfilter) "} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
    print "\t\t\\multicolumn{5}{c}{\\texttt{BASE+DB+OPF}} & \\multicolumn{4}{c}{\\texttt{BASE+DB+EOPF}} \\\\"
    print "\t\t\\cmidrule(r){5-9} \\cmidrule(r){10-13} & & & & " detail_tg_label() " & \\texttt{N} & \\texttt{PT} & \\texttt{F} & \\texttt{PN} & " detail_tg_label() " & \\texttt{N} & \\texttt{PT} & \\texttt{F} \\\\"
    detail_common_head_end(13)
@@ -1392,7 +1464,7 @@ function print_detail_three(probfilter,   r, prob, key) {
 function detail_testm_begin(s) {
    s = prob_suffix("CCMPP")
    detail_common_begin("cccc@{\\,}rrrrrrrrr", detail_caption("testm", "CCMPP"), "tabletestm:detail-" s, "testm", "CCMPP", 13)
-   print "\t\t\\multirow{2}{*}{$m$} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
+   print "\t\t\\multirow{2}{*}{" detail_first_header("CCMPP") "} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
    print "\t\t\\multicolumn{2}{c}{\\texttt{BASE}} & \\multicolumn{2}{c}{\\texttt{BASE+sDI}} & \\multicolumn{2}{c}{\\texttt{BASE+DB}} & \\multicolumn{2}{c}{\\texttt{BASE+DB+OPF}} & \\multirow{2}{*}{\\texttt{\\%DP}} \\\\"
    print "\t\t\\cmidrule(r){5-6} \\cmidrule(r){7-8} \\cmidrule(r){9-10} \\cmidrule(r){11-12} & & & & " detail_tg_label() " & \\texttt{N} & " detail_tg_label() " & \\texttt{N} & " detail_tg_label() " & \\texttt{N} & " detail_tg_label() " & \\texttt{N} & \\\\"
    detail_common_head_end(13)
@@ -1410,7 +1482,7 @@ function print_detail_testm(   r, prob, key) {
       detail_time_node(prob, "DB", timelimit)
       detail_time_node(prob, "DB-OPF@14400", timelimit)
       key = prob SUBSEP "DB"
-      printf(" & %s \\\\\n", fmt_small0(dr[key]))
+      printf(" & %s \\\\\n", fmt_dr_key(key))
    }
    detail_common_end()
 }
@@ -1449,6 +1521,8 @@ function print_detail_tables() {
 }
 
 END {
+   finish_uncommitted_file()
+
    if (fatal)
       exit 2
 

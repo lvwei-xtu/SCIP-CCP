@@ -6,7 +6,7 @@ export LANG=C
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-RESULT_NAME="${RESULT_NAME:-results-0706}"
+RESULT_NAME="${RESULT_NAME:-results-0707}"
 RESULT_ROOT="${RESULT_ROOT:-$ROOT/$RESULT_NAME}"
 COMMAND_FILE="${1:-$SCRIPT_DIR/${RESULT_NAME}.commands.sh}"
 
@@ -44,9 +44,27 @@ Environment overrides:
   OPF_LIMIT     output subfolder for BASE+DB+OPF, usually 14400 or 86400
 
 Examples:
-  PROBLEMS=CCRP bash scripts/gen_commands.sh scripts/CCRP.sh
+  PROBLEMS=CCRP  METHODS=BASE bash scripts/gen_commands.sh scripts/CCRP-BASE.sh
+  PROBLEMS=CCRP  METHODS=BASE+DI bash scripts/gen_commands.sh scripts/CCRP-BASE+DI.sh
+  PROBLEMS=CCRP  METHODS=BASE+sDI bash scripts/gen_commands.sh scripts/CCRP-BASE+sDI.sh
+  PROBLEMS=CCRP  METHODS=BASE+DB bash scripts/gen_commands.sh scripts/CCRP-BASE+DB.sh
+  PROBLEMS=CCRP  METHODS=BASE+DB+OPF bash scripts/gen_commands.sh scripts/CCRP-BASE+DB+OPF.sh
+
+  PROBLEMS=CCMPP  METHODS=BASE bash scripts/gen_commands.sh scripts/CCMPP-BASE.sh
+  PROBLEMS=CCMPP  METHODS=BASE+DI bash scripts/gen_commands.sh scripts/CCMPP-BASE+DI.sh
+  PROBLEMS=CCMPP  METHODS=BASE+sDI bash scripts/gen_commands.sh scripts/CCMPP-BASE+sDI.sh
+  PROBLEMS=CCMPP  METHODS=BASE+DB bash scripts/gen_commands.sh scripts/CCMPP-BASE+DB.sh
+  PROBLEMS=CCMPP  METHODS=BASE+DB+OPF bash scripts/gen_commands.sh scripts/CCMPP-BASE+DB+OPF.sh
+
+  PROBLEMS=CCLS  METHODS=BASE bash scripts/gen_commands.sh scripts/CCLS-BASE.sh
+  PROBLEMS=CCLS  METHODS=BASE+DI bash scripts/gen_commands.sh scripts/CCLS-BASE+DI.sh
+  PROBLEMS=CCLS  METHODS=BASE+sDI bash scripts/gen_commands.sh scripts/CCLS-BASE+sDI.sh
+  PROBLEMS=CCLS  METHODS=BASE+DB bash scripts/gen_commands.sh scripts/CCLS-BASE+DB.sh
+  PROBLEMS=CCLS  METHODS=BASE+DB+OPF bash scripts/gen_commands.sh scripts/CCLS-BASE+DB+OPF.sh
+
+  PROBLEMS=CCRP  bash scripts/gen_commands.sh scripts/CCRP.sh
   PROBLEMS=CCMPP bash scripts/gen_commands.sh scripts/CCMPP.sh
-  PROBLEMS=CCLS bash scripts/gen_commands.sh scripts/CCLS.sh
+  PROBLEMS=CCLS  bash scripts/gen_commands.sh scripts/CCLS.sh
 
   PROBLEMS=CCRP MODE=long bash scripts/gen_commands.sh scripts/CCRP-long.sh
   PROBLEMS=CCMPP MODE=long bash scripts/gen_commands.sh scripts/CCMPP-long.sh
