@@ -89,7 +89,7 @@ To reproduce the computational results presented in the paper, please run:
 ```bash
 awk -f script/CCP.awk -v root=results -v table=all > PaperTables.txt
 ```
-This command writes the LaTeX source of all paper tables to `PaperTables.txt`. Then, you can copy the tables from `PaperTables.txt` into the [Springer Nature's LaTeX template.](https://www.springernature.com/gp/authors/campaigns/latex-author-support). 
+This command writes the LaTeX source code for all tables in the paper to the `PaperTables.txt`. You can then copy the table source code from `PaperTables.txt` into the [Springer Nature's LaTeX template](https://www.springernature.com/gp/authors/campaigns/latex-author-support) for further editing.
 
 ### 📊 Detailed computational results
 Detailed statistics of instance-wise computational results can be found in the online supplement available at [My Google Drive](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link)
