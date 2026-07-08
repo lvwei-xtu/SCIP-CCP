@@ -427,7 +427,7 @@ function eligible(prob, probfilter, family) {
    return 1
 }
 
-function aggregate(method_string, probfilter, threshold, require_all, family,   n, i, j, prob, method, key, present, atleast, success, allsolved, data, node_data, f_data, c_data) {
+function aggregate(method_string, probfilter, threshold, require_all, family,   n, i, j, prob, method, key, present, atleast, nodehit, allsolved, data, node_data, f_data, c_data) {
    n = split(method_string, rowmethod, " ")
    rown = 0
    for (j = 1; j <= n; ++j) {
@@ -448,7 +448,7 @@ function aggregate(method_string, probfilter, threshold, require_all, family,   
 
       present = 1
       atleast = 0
-      success = 0
+      nodehit = 0
       allsolved = 1
 
       for (j = 1; j <= n; ++j) {
@@ -458,13 +458,12 @@ function aggregate(method_string, probfilter, threshold, require_all, family,   
             present = 0
             break
          }
-         if (status[key] == "ok") {
+         if (status[key] == "ok")
             ++atleast
-            if (nodes[key] >= threshold)
-               ++success
-         }
          else
             allsolved = 0
+         if (nodes[key] >= threshold)
+            ++nodehit
       }
 
       if (!present)
@@ -473,7 +472,7 @@ function aggregate(method_string, probfilter, threshold, require_all, family,   
          continue
       if (!require_all && atleast == 0)
          continue
-      if (atleast == n && success == 0)
+      if (nodehit == 0)
          continue
 
       for (j = 1; j <= n; ++j) {
