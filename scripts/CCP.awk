@@ -957,7 +957,7 @@ function print_table5_value_row(method_label, metric_label, values, j, is_delta,
    finish_row()
 }
 
-function print_table5(   I, J, K, ni, nj, nk, m, ii, jj, kk, inst, p, methods, anyok, allok, numt, numn, j, key, val) {
+function print_table5(   I, J, K, ni, nj, nk, m, ii, jj, kk, inst, p, methods, anyok, numt, numn, j, key, val) {
    init_table5()
    methods[1] = "BnC-MIX"
    methods[2] = "BnC-MIX-sDI"
@@ -977,15 +977,12 @@ function print_table5(   I, J, K, ni, nj, nk, m, ii, jj, kk, inst, p, methods, a
                p = table5_key(inst, K[kk])
 
                anyok = 0
-               allok = 1
                for (j = 1; j <= 4; ++j) {
                   key = p SUBSEP methods[j]
                   if (status[key] == "ok") {
                      anyok = 1
                      ++msolved[m, j]
                   }
-                  else
-                     allok = 0
                }
 
                if (anyok) {
@@ -993,17 +990,11 @@ function print_table5(   I, J, K, ni, nj, nk, m, ii, jj, kk, inst, p, methods, a
                      key = p SUBSEP methods[j]
                      val = min(timev[key], timelimit)
                      mavetime[m, j] = gmean_update(mavetime[m, j], val, timeshift, numt)
+                     mavenodes[m, j] = gmean_update(mavenodes[m, j], nodes[key], nodeshift, numn)
                   }
                   key = p SUBSEP methods[3]
                   mavedr[m] = gmean_update(mavedr[m], dr[key], nodeshift, numt)
                   ++numt
-               }
-
-               if (allok) {
-                  for (j = 1; j <= 4; ++j) {
-                     key = p SUBSEP methods[j]
-                     mavenodes[m, j] = gmean_update(mavenodes[m, j], nodes[key], nodeshift, numn)
-                  }
                   ++numn
                }
             }
