@@ -13,7 +13,7 @@ BEGIN {
       add_files_from_dir(root)
 
    if (ARGC <= 1 && root == "") {
-      print "usage: awk -f AWK/averageCCPs_results.awk -v root=results [-v table=1|2|3|4|5|all|detail]" > "/dev/stderr"
+      print "usage: awk -f scripts/CCP.awk -v root=results [-v table=1|2|3|4|5|all|detail]" > "/dev/stderr"
       fatal = 1
       exit 2
    }
@@ -696,7 +696,7 @@ function table2_begin() {
    print "\t\\centering"
    print "\t\\addtolength{\\tabcolsep}{-3pt}"
    print "\t\\caption{Performance comparison of settings \\texttt{BASE+DB}, \\texttt{BASE+sDI}, and \\texttt{BASE+DI}.}"
-   print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}lrrrrrrrrrrrrrrrr@{\\extracolsep\\fill}}"
+   print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}lrrrrrrrrrrrrrr@{\\extracolsep\\fill}}"
    print "\t\t\\toprule"
    print "\t\t\\multirow{2}{*}{\\texttt{Probs}} & \\multirow{2}{*}{\\texttt{\\#}}"
    print "\t\t& \\multicolumn{3}{c}{\\texttt{BASE+DB}} & \\multicolumn{5}{c}{\\texttt{BASE+sDI}} & \\multicolumn{5}{c}{\\texttt{BASE+DI}} \\\\ "

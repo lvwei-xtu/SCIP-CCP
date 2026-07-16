@@ -6,10 +6,9 @@ export LANG=C
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-RESULT_NAME="${RESULT_NAME:-results-0707}"
+RESULT_NAME="${RESULT_NAME:-results-0709}"
 RESULT_ROOT="${RESULT_ROOT:-$ROOT/$RESULT_NAME}"
 COMMAND_FILE="${1:-$SCRIPT_DIR/${RESULT_NAME}.commands.sh}"
-
 EXE="${EXE:-}"
 PROBLEMS_SELECTED="${PROBLEMS:-}"
 METHODS_SELECTED="${METHODS:-}"
@@ -17,33 +16,33 @@ MODE="${MODE:-main}"
 OPF_LIMIT="${OPF_LIMIT:-}"
 
 usage() {
-  cat <<'EOF'
-Usage:
-  bash lsf/gen_commands.sh [COMMAND_FILE]
+  cat <<EOF
+Usage: [PROBLEMS=CCRP,CCMPP,CCLS] [METHODS=BASE,...] [MODE=main|exact|all] bash scripts/gen_commands.sh OUTPUT.sh
 
-Purpose:
-  Generate CCP test commands into COMMAND_FILE.  The script does not submit or
-  execute jobs.
+Generate shell command files for SCIP-CCP experiments. Commands are generated only;
+they are not submitted to LSF.
 
-Modes:
-  MODE=main   default; generate BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF
-              and write BASE+DB+OPF outputs under BASE+DB+OPF/14400.
-  MODE=long   generate only BASE+DB+OPF and BASE+DB+EOPF; write BASE+DB+OPF
-              outputs under BASE+DB+OPF/86400.  Before using this mode, manually
-              set limits/time = 86400 in the BASE+DB+OPF setting files.
-  MODE=all    generate all six settings; BASE+DB+OPF uses OPF_LIMIT or 14400.
+MODE=main  generates BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF with 14400s output path.
+MODE=exact generates BASE+DB+OPF with 86400s output path and BASE+DB+EOPF. If METHODS is
+           not set, commands are split into PROBLEM-BASE+DB+OPF-86400.sh and
+           PROBLEM-BASE+DB+EOPF.sh under the output directory. For CCMPP, m=50,
+           m=100, and m=150 instances are skipped in this mode.
+MODE=all   generates all settings with the normal 14400s BASE+DB+OPF output path.
 
-Environment overrides:
-  ROOT          repo root; default is the parent directory of lsf/
-  RESULT_NAME   result directory name; default results-0706
-  RESULT_ROOT   full result directory; default <ROOT>/<RESULT_NAME>
-  EXE           executable path used in generated commands; default auto-detect
-  PROBLEMS      comma-separated subset: CCRP,CCMPP,CCLS
-  METHODS       comma-separated subset overriding MODE
-  MODE          main, long, or all
-  OPF_LIMIT     output subfolder for BASE+DB+OPF, usually 14400 or 86400
+Environment variables:
+  ROOT         Repository root. Default: parent of scripts/.
+  RESULT_NAME  Result folder name under ROOT. Default: results-0707.
+  RESULT_ROOT  Full result root. Default: ROOT/RESULT_NAME.
+  EXE          Solver executable. Default: ROOT/build/ccp.
+  PROBLEMS     Comma-separated subset of CCRP, CCMPP, CCLS. Default: all.
+  METHODS      Comma-separated subset of BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF, BASE+DB+EOPF.
+  MODE         main, exact, or all. Default: main.
 
 Examples:
+  PROBLEMS=CCRP  bash scripts/gen_commands.sh scripts/CCRP.sh
+  PROBLEMS=CCMPP bash scripts/gen_commands.sh scripts/CCMPP.sh
+  PROBLEMS=CCLS  bash scripts/gen_commands.sh scripts/CCLS.sh
+
   PROBLEMS=CCRP  METHODS=BASE bash scripts/gen_commands.sh scripts/CCRP-BASE.sh
   PROBLEMS=CCRP  METHODS=BASE+DI bash scripts/gen_commands.sh scripts/CCRP-BASE+DI.sh
   PROBLEMS=CCRP  METHODS=BASE+sDI bash scripts/gen_commands.sh scripts/CCRP-BASE+sDI.sh
@@ -62,13 +61,10 @@ Examples:
   PROBLEMS=CCLS  METHODS=BASE+DB bash scripts/gen_commands.sh scripts/CCLS-BASE+DB.sh
   PROBLEMS=CCLS  METHODS=BASE+DB+OPF bash scripts/gen_commands.sh scripts/CCLS-BASE+DB+OPF.sh
 
-  PROBLEMS=CCRP  bash scripts/gen_commands.sh scripts/CCRP.sh
-  PROBLEMS=CCMPP bash scripts/gen_commands.sh scripts/CCMPP.sh
-  PROBLEMS=CCLS  bash scripts/gen_commands.sh scripts/CCLS.sh
+  PROBLEMS=CCRP MODE=exact bash scripts/gen_commands.sh scripts/CCRP-exact.sh
+  PROBLEMS=CCMPP MODE=exact bash scripts/gen_commands.sh scripts/CCMPP-exact.sh
+  PROBLEMS=CCLS MODE=exact bash scripts/gen_commands.sh scripts/CCLS-exact.sh
 
-  PROBLEMS=CCRP MODE=long bash scripts/gen_commands.sh scripts/CCRP-long.sh
-  PROBLEMS=CCMPP MODE=long bash scripts/gen_commands.sh scripts/CCMPP-long.sh
-  PROBLEMS=CCLS MODE=long bash scripts/gen_commands.sh scripts/CCLS-long.sh
 EOF
 }
 
@@ -78,42 +74,32 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 if [[ -z "$EXE" ]]; then
-  if [[ -x "$ROOT/build/ccp" ]]; then
-    EXE="./build/ccp"
-  elif [[ -x "$ROOT/build/bin/examples/ccp" ]]; then
-    EXE="./build/bin/examples/ccp"
-  else
-    EXE="./build/ccp"
-  fi
+  EXE="$ROOT/build/ccp"
 fi
 
-if [[ "$EXE" = /* ]]; then
-  COMMAND_EXE="$EXE"
-else
-  COMMAND_EXE="$ROOT/${EXE#./}"
-fi
-
-PROBLEM_LIST=(CCRP CCMPP CCLS)
+COMMAND_EXE="$EXE"
 
 case "$MODE" in
   main)
     DEFAULT_METHODS=(BASE BASE+DI BASE+sDI BASE+DB BASE+DB+OPF)
-    [[ -n "$OPF_LIMIT" ]] || OPF_LIMIT=14400
+    OPF_LIMIT="${OPF_LIMIT:-14400}"
     ;;
-  long)
+  exact)
     DEFAULT_METHODS=(BASE+DB+OPF BASE+DB+EOPF)
-    [[ -n "$OPF_LIMIT" ]] || OPF_LIMIT=86400
+    OPF_LIMIT="${OPF_LIMIT:-86400}"
     ;;
   all)
     DEFAULT_METHODS=(BASE BASE+DI BASE+sDI BASE+DB BASE+DB+OPF BASE+DB+EOPF)
-    [[ -n "$OPF_LIMIT" ]] || OPF_LIMIT=14400
+    OPF_LIMIT="${OPF_LIMIT:-14400}"
     ;;
   *)
-    printf 'ERROR: unknown MODE: %s\n' "$MODE" >&2
+    printf 'ERROR: unsupported MODE=%s\n' "$MODE" >&2
     usage >&2
     exit 1
     ;;
 esac
+
+ALL_PROBLEMS=(CCRP CCMPP CCLS)
 
 if [[ -n "$METHODS_SELECTED" ]]; then
   IFS=',' read -r -a METHOD_LIST <<< "$METHODS_SELECTED"
@@ -121,14 +107,64 @@ else
   METHOD_LIST=("${DEFAULT_METHODS[@]}")
 fi
 
+EXACT_SPLIT=0
+if [[ "$MODE" == "exact" && -z "$METHODS_SELECTED" ]]; then
+  EXACT_SPLIT=1
+fi
+
+COMMAND_DIR="$(dirname "$COMMAND_FILE")"
+COMMAND_FILES=()
+
+add_command_file_once() {
+  local file="$1"
+  local existing
+  for existing in "${COMMAND_FILES[@]:-}"; do
+    [[ "$existing" == "$file" ]] && return 0
+  done
+  mkdir -p "$(dirname "$file")"
+  : > "$file"
+  COMMAND_FILES+=("$file")
+}
+
+exact_command_file() {
+  local prob="$1"
+  local method="$2"
+  case "$method" in
+    BASE+DB+OPF) printf '%s/%s-BASE+DB+OPF-%s.sh' "$COMMAND_DIR" "$prob" "$OPF_LIMIT" ;;
+    BASE+DB+EOPF) printf '%s/%s-BASE+DB+EOPF.sh' "$COMMAND_DIR" "$prob" ;;
+    *) printf '%s' "$COMMAND_FILE" ;;
+  esac
+}
+
+command_file_for() {
+  local prob="$1"
+  local method="$2"
+  if [[ "$EXACT_SPLIT" -eq 1 ]]; then
+    exact_command_file "$prob" "$method"
+  else
+    printf '%s' "$COMMAND_FILE"
+  fi
+}
+
+method_in_list() {
+  local want="$1"
+  local method
+  for method in "${METHOD_LIST[@]}"; do
+    [[ "$method" == "$want" ]] && return 0
+  done
+  return 1
+}
+
 csv_contains() {
   local csv="$1"
   local item="$2"
+  local token
   [[ -z "$csv" ]] && return 0
-  case ",$csv," in
-    *,"$item",*) return 0 ;;
-    *) return 1 ;;
-  esac
+  IFS=',' read -r -a tokens <<< "$csv"
+  for token in "${tokens[@]}"; do
+    [[ "$token" == "$item" ]] && return 0
+  done
+  return 1
 }
 
 problem_data_dir() {
@@ -172,7 +208,7 @@ suffix_to_eps() {
     15) printf '0.15' ;;
     1) printf '0.1' ;;
     2) printf '0.2' ;;
-    *) printf '%s' "$1" ;;
+    *) return 1 ;;
   esac
 }
 
@@ -198,50 +234,116 @@ method_result_dir() {
   fi
 }
 
+skip_instance_for_mode() {
+  local prob="$1"
+  local data_base="$2"
+  local m="${data_base%%-*}"
+
+  if [[ "$MODE" == "exact" && "$prob" == "CCMPP" ]]; then
+    case "$m" in
+      50|100|150) return 0 ;;
+    esac
+  fi
+
+  return 1
+}
+
 shell_quote() {
   printf '%q' "$1"
 }
 
-mkdir -p "$SCRIPT_DIR" "$RESULT_ROOT" "$(dirname "$COMMAND_FILE")"
-: > "$COMMAND_FILE"
+update_exact_opf_settings() {
+  local prob="$1"
+  local setting_dir="$ROOT/settings/$(problem_setting_dir "$prob")"
+  local suffix file tmp updated=0 missing=0
+
+  if [[ ! -d "$setting_dir" ]]; then
+    printf 'WARN missing %s setting directory for exact mode: %s\n' "$prob" "$setting_dir" >&2
+    return 0
+  fi
+
+  for suffix in $(problem_suffixes "$prob"); do
+    file="$setting_dir/BASE+DB+OPF${suffix}.set"
+    if [[ ! -f "$file" ]]; then
+      printf 'WARN missing %s BASE+DB+OPF setting for exact mode: %s\n' "$prob" "$file" >&2
+      missing=$((missing + 1))
+      continue
+    fi
+
+    tmp="$(mktemp)"
+    sed 's/^limits\/time[[:space:]]*=.*/limits\/time = 86400/' "$file" > "$tmp"
+    if cmp -s "$tmp" "$file"; then
+      rm -f "$tmp"
+    else
+      mv "$tmp" "$file"
+      updated=$((updated + 1))
+    fi
+  done
+
+  printf 'INFO %s BASE+DB+OPF exact settings updated: %d\n' "$prob" "$updated"
+  if [[ "$missing" -gt 0 ]]; then
+    printf 'WARN %s BASE+DB+OPF exact settings missing: %d\n' "$prob" "$missing" >&2
+  fi
+}
+
+mkdir -p "$SCRIPT_DIR" "$RESULT_ROOT" "$COMMAND_DIR"
+
+if [[ "$EXACT_SPLIT" -eq 0 ]]; then
+  add_command_file_once "$COMMAND_FILE"
+fi
+
+if [[ "$MODE" == "exact" ]] && method_in_list BASE+DB+OPF; then
+  for prob in "${ALL_PROBLEMS[@]}"; do
+    csv_contains "$PROBLEMS_SELECTED" "$prob" || continue
+    update_exact_opf_settings "$prob"
+  done
+fi
 
 generated=0
 missing=0
 
-for prob in "${PROBLEM_LIST[@]}"; do
+for prob in "${ALL_PROBLEMS[@]}"; do
   csv_contains "$PROBLEMS_SELECTED" "$prob" || continue
 
+  data_dir="$ROOT/data/$(problem_data_dir "$prob")"
+  setting_dir="$ROOT/settings/$(problem_setting_dir "$prob")"
   data_dir_rel="data/$(problem_data_dir "$prob")"
   setting_dir_rel="settings/$(problem_setting_dir "$prob")"
   ext="$(problem_extension "$prob")"
-  data_dir="$ROOT/$data_dir_rel"
-  setting_dir="$ROOT/$setting_dir_rel"
 
   if [[ ! -d "$data_dir" ]]; then
-    printf 'ERROR: data directory not found: %s\n' "$data_dir" >&2
-    exit 1
+    printf 'WARN missing data directory: %s\n' "$data_dir" >&2
+    missing=$((missing + 1))
+    continue
   fi
   if [[ ! -d "$setting_dir" ]]; then
-    printf 'ERROR: setting directory not found: %s\n' "$setting_dir" >&2
-    exit 1
+    printf 'WARN missing setting directory: %s\n' "$setting_dir" >&2
+    missing=$((missing + 1))
+    continue
   fi
 
   while IFS= read -r -d '' data_file; do
     data_rel="${data_file#$ROOT/}"
     data_base="$(basename "$data_file")"
 
+    if skip_instance_for_mode "$prob" "$data_base"; then
+      continue
+    fi
+
     for method in "${METHOD_LIST[@]}"; do
       method_prefix="$(method_setting_prefix "$method")"
       result_method_dir="$(method_result_dir "$prob" "$method")"
+      target_command_file="$(command_file_for "$prob" "$method")"
+      add_command_file_once "$target_command_file"
       mkdir -p "$result_method_dir"
 
       for suffix in $(problem_suffixes "$prob"); do
         eps="$(suffix_to_eps "$suffix")"
         setting_file="$setting_dir/${method_prefix}${suffix}.set"
-        setting_rel="${setting_file#$ROOT/}"
+        setting_rel="$setting_dir_rel/${method_prefix}${suffix}.set"
 
         if [[ ! -f "$setting_file" ]]; then
-          printf 'WARN: missing setting: %s\n' "$setting_file" >&2
+          printf 'WARN missing setting: %s\n' "$setting_file" >&2
           missing=$((missing + 1))
           continue
         fi
@@ -254,25 +356,29 @@ for prob in "${PROBLEM_LIST[@]}"; do
           "$(shell_quote "$data_rel")" \
           "$(shell_quote "$setting_rel")" \
           "$(shell_quote "$out_file")" \
-          "$(shell_quote "$err_file")" >> "$COMMAND_FILE"
-
+          "$(shell_quote "$err_file")" >> "$target_command_file"
         generated=$((generated + 1))
       done
     done
   done < <(find "$data_dir" -type f -name "*.${ext}" -print0 | sort -z)
 done
 
-chmod +x "$COMMAND_FILE"
+for command_file in "${COMMAND_FILES[@]:-}"; do
+  chmod +x "$command_file"
+done
 
-printf 'INFO root: %s\n' "$ROOT"
-printf 'INFO mode: %s\n' "$MODE"
-printf 'INFO OPF output folder: %s\n' "$OPF_LIMIT"
+if [[ "$EXACT_SPLIT" -eq 1 ]]; then
+  printf 'INFO generated %d commands into:\n' "$generated"
+  for command_file in "${COMMAND_FILES[@]:-}"; do
+    printf '  %s\n' "$command_file"
+  done
+else
+  printf 'INFO generated %d commands into %s\n' "$generated" "$COMMAND_FILE"
+fi
+printf 'INFO result root: %s\n' "$RESULT_ROOT"
 printf 'INFO executable in commands: %s\n' "$COMMAND_EXE"
-printf 'INFO result directory: %s\n' "$RESULT_ROOT"
-printf 'INFO command file: %s\n' "$COMMAND_FILE"
-printf 'INFO generated commands: %d\n' "$generated"
-printf 'INFO missing settings: %d\n' "$missing"
 
 if [[ "$missing" -gt 0 ]]; then
+  printf 'ERROR encountered %d missing inputs\n' "$missing" >&2
   exit 2
 fi

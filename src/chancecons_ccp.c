@@ -1284,6 +1284,8 @@ int SloveSubMIPExactFixing(
    SCIP_CALL( SCIPcreate(&scip) );
    /* include default plugins */
    SCIP_CALL( SCIPincludeDefaultPlugins(scip) );
+   /* set time limit */
+   SCIP_CALL( SCIPsetRealParam(scip, "limits/time", 86400.0) );
    /* turns off the SCIP output */
    SCIP_CALL( SCIPsetIntParam(scip, "display/verblevel", 0) );
 
