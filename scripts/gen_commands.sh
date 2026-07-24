@@ -17,7 +17,7 @@ OPF_LIMIT="${OPF_LIMIT:-}"
 
 usage() {
   cat <<EOF
-Usage: [PROBLEMS=CCRP,CCMPP,CCLS] [METHODS=BASE,...] [MODE=main|exact|all] bash scripts/gen_commands.sh OUTPUT.sh
+Usage: [PROBLEMS=CCRP,CCMPP,CCLS] [METHODS=BASE,...] [MODE=main|exact|all|ccmpp03] bash scripts/gen_commands.sh OUTPUT.sh
 
 Generate shell command files for SCIP-CCP experiments. Commands are generated only;
 they are not submitted to LSF.
@@ -28,15 +28,19 @@ MODE=exact generates BASE+DB+OPF with 86400s output path and BASE+DB+EOPF. If ME
            PROBLEM-BASE+DB+EOPF.sh under the output directory. For CCMPP, m=50,
            m=100, and m=150 instances are skipped in this mode.
 MODE=all   generates all settings with the normal 14400s BASE+DB+OPF output path.
+MODE=ccmpp03 generates epsilon=0.3 commands for CCMPP only, using BASE, BASE+DI,
+             BASE+sDI, BASE+DB, and BASE+DB+OPF. All commands are written to
+             the requested output file. Instances with m=50, 100, or 150 are
+             skipped.
 
 Environment variables:
   ROOT         Repository root. Default: parent of scripts/.
-  RESULT_NAME  Result folder name under ROOT. Default: results-0707.
+  RESULT_NAME  Result folder name under ROOT. Default: results-0709.
   RESULT_ROOT  Full result root. Default: ROOT/RESULT_NAME.
   EXE          Solver executable. Default: ROOT/build/ccp.
   PROBLEMS     Comma-separated subset of CCRP, CCMPP, CCLS. Default: all.
   METHODS      Comma-separated subset of BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF, BASE+DB+EOPF.
-  MODE         main, exact, or all. Default: main.
+  MODE         main, exact, all, or ccmpp03. Default: main.
 
 Examples:
   PROBLEMS=CCRP  bash scripts/gen_commands.sh scripts/CCRP.sh
@@ -65,6 +69,8 @@ Examples:
   PROBLEMS=CCMPP MODE=exact bash scripts/gen_commands.sh scripts/CCMPP-exact.sh
   PROBLEMS=CCLS MODE=exact bash scripts/gen_commands.sh scripts/CCLS-exact.sh
 
+  MODE=ccmpp03 bash scripts/gen_commands.sh scripts/CCMPP-epsilon03.sh
+
 EOF
 }
 
@@ -91,6 +97,15 @@ case "$MODE" in
   all)
     DEFAULT_METHODS=(BASE BASE+DI BASE+sDI BASE+DB BASE+DB+OPF BASE+DB+EOPF)
     OPF_LIMIT="${OPF_LIMIT:-14400}"
+    ;;
+  ccmpp03)
+    DEFAULT_METHODS=(BASE BASE+DI BASE+sDI BASE+DB BASE+DB+OPF)
+    OPF_LIMIT="${OPF_LIMIT:-14400}"
+    if [[ -n "$PROBLEMS_SELECTED" && "$PROBLEMS_SELECTED" != "CCMPP" ]]; then
+      printf 'ERROR: MODE=ccmpp03 only supports PROBLEMS=CCMPP\n' >&2
+      exit 1
+    fi
+    PROBLEMS_SELECTED="CCMPP"
     ;;
   *)
     printf 'ERROR: unsupported MODE=%s\n' "$MODE" >&2
@@ -195,6 +210,12 @@ problem_extension() {
 }
 
 problem_suffixes() {
+  if [[ "$MODE" == "ccmpp03" ]]; then
+    [[ "$1" == "CCMPP" ]] || return 1
+    printf '3'
+    return
+  fi
+
   case "$1" in
     CCRP) printf '15 1 2' ;;
     CCMPP|CCLS) printf '05 1 2' ;;
@@ -208,6 +229,7 @@ suffix_to_eps() {
     15) printf '0.15' ;;
     1) printf '0.1' ;;
     2) printf '0.2' ;;
+    3) printf '0.3' ;;
     *) return 1 ;;
   esac
 }
@@ -239,7 +261,7 @@ skip_instance_for_mode() {
   local data_base="$2"
   local m="${data_base%%-*}"
 
-  if [[ "$MODE" == "exact" && "$prob" == "CCMPP" ]]; then
+  if [[ ("$MODE" == "exact" || "$MODE" == "ccmpp03") && "$prob" == "CCMPP" ]]; then
     case "$m" in
       50|100|150) return 0 ;;
     esac
