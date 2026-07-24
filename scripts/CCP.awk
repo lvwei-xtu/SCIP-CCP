@@ -345,9 +345,13 @@ function g_parse_result_path(path, bn, stem, p, rest, marker, prob_lc, suffix) {
       g_current_method = "BASE+DI"
       marker = "BASE+DI-MIXROOT-LAZY1-"
    }
+   else if (index(rest, "BASE-MIX-") == 1) {
+      g_current_method = "BASE-MIX"
+      marker = "BASE-MIX-"
+   }
    else if (index(rest, "BASE-NOMIX-") == 1) {
-      g_current_method = "BASE-NOMIX"
-      marker = g_current_method "-"
+      g_current_method = "BASE-MIX"
+      marker = "BASE-NOMIX-"
    }
    else if (index(rest, "BASE+sDI-") == 1) {
       g_current_method = "BASE+sDI"
@@ -1437,7 +1441,7 @@ function g_objective_to_3(value, rounded) {
 }
 
 function g_check_optimal_objectives(   methods, n, i, j, p, method, key, rounded, reference_found, reference_value, reference_method, checked, checked_instances, errors) {
-   methods = "BASE-NOMIX BASE BASE+DI BASE+sDI"
+   methods = "BASE-MIX BASE BASE+DI BASE+sDI"
    n = split(methods, g_objective_method, " ")
    checked = 0
    checked_instances = 0
@@ -1474,8 +1478,6 @@ function g_check_optimal_objectives(   methods, n, i, j, p, method, key, rounded
       }
    }
 
-   if (errors == 0 && checked > 0)
-      printf "INFO Gurobi objective check passed: %d optimal results across %d instances, tolerance=3 decimal places\n", checked, checked_instances > "/dev/stderr"
    return errors
 }
 
@@ -1488,7 +1490,7 @@ function g_eligible(p, probfilter) {
 }
 
 function g_aggregate(probfilter,   methods, n, i, j, p, method, key, present, atleast, data) {
-   methods = "BASE-NOMIX BASE BASE+DI BASE+sDI"
+   methods = "BASE-MIX BASE BASE+DI BASE+sDI"
    n = split(methods, g_rowmethod, " ")
    rown = 0
 
@@ -1591,11 +1593,11 @@ function table7_begin() {
    print "\t\\small"
    print "\t\\centering"
    print "\t\\addtolength{\\tabcolsep}{-3pt}"
-   print "\t\\caption{Performance comparison of settings \\texttt{BASE-NOMIX}, \\texttt{BASE}, \\texttt{BASE+DI}, and \\texttt{BASE+sDI} using Gurobi.}"
+   print "\t\\caption{Performance comparison of settings \\texttt{BASE-MIX}, \\texttt{BASE}, \\texttt{BASE+DI}, and \\texttt{BASE+sDI} using Gurobi.}"
    print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}lrrrrrrrrrrrrrrrrr@{\\extracolsep\\fill}}"
    print "\t\t\\toprule"
    print "\t\t\\multirow{2}{*}{\\texttt{Probs}} & \\multirow{2}{*}{\\texttt{\\#}}"
-   print "\t\t& \\multicolumn{3}{c}{\\texttt{BASE-NOMIX}} & \\multicolumn{3}{c}{\\texttt{BASE}} & \\multicolumn{5}{c}{\\texttt{BASE+DI}} & \\multicolumn{5}{c}{\\texttt{BASE+sDI}} \\\\"
+   print "\t\t& \\multicolumn{3}{c}{\\texttt{BASE-MIX}} & \\multicolumn{3}{c}{\\texttt{BASE}} & \\multicolumn{5}{c}{\\texttt{BASE+DI}} & \\multicolumn{5}{c}{\\texttt{BASE+sDI}} \\\\"
    print "\t\t\\cmidrule(l{4pt}r{3pt}){3-5} \\cmidrule(l{4pt}r{3pt}){6-8} \\cmidrule(l{4pt}r{3pt}){9-13} \\cmidrule(l{4pt}r{3pt}){14-18}"
    print "\t\t& & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{\\%DP} & \\texttt{\\%NDI} & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{\\%DP} & \\texttt{\\%NDI} \\\\"
    print "\t\t\\midrule"
