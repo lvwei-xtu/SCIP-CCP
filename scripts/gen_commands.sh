@@ -6,7 +6,7 @@ export LANG=C
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-RESULT_NAME="${RESULT_NAME:-results-0709}"
+RESULT_NAME="${RESULT_NAME:-results-scip}"
 RESULT_ROOT="${RESULT_ROOT:-$ROOT/$RESULT_NAME}"
 COMMAND_FILE="${1:-$SCRIPT_DIR/${RESULT_NAME}.commands.sh}"
 EXE="${EXE:-}"
