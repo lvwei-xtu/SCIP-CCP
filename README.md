@@ -20,7 +20,8 @@ SCIP-CCP
 ├── src/                # Source code for implementing the proposed approaches
 ├── data/               # Benchmark instances (CCRP, CCMPP, CCLS)
 ├── settings/           # Configuration files with different settings
-└── results/            # Logfiles produced by the computational experiments
+└── results-scip/       # Logfiles produced by SCIP in the computational experiments
+└── results-gurobi/     # Logfiles produced by Gurobi in the computational experiments
 └── scripts/            # shell and awk scripts used to generate the tables in the paper
 ```
 
