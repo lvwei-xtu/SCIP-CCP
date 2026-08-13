@@ -9,6 +9,12 @@ BEGIN {
    if (table == "")
       table = "all"
 
+   if (table !~ /^(1|2|3|4|5|6|all|detail)$/) {
+      printf "ERROR: unsupported table '%s'; use 1, 2, 3, 4, 5, 6, all, or detail\n", table > "/dev/stderr"
+      fatal = 1
+      exit 2
+   }
+
    expand_dir_arguments()
 
    if (ResultSCIP != "")
@@ -21,7 +27,7 @@ BEGIN {
       add_files_from_dir(root)
 
    if (ARGC <= 1 && root == "" && ResultSCIP == "" && ResultGurobi == "") {
-      print "usage: awk -f scripts/CCP.awk [-v ResultSCIP=results-scip] [-v ResultGurobi=results-gurobi] [-v table=1|2|3|4|5|6|7|8|epsilon|all|detail]" > "/dev/stderr"
+      print "usage: awk -f scripts/CCP.awk [-v ResultSCIP=results-scip] [-v ResultGurobi=results-gurobi] [-v table=1|2|3|4|5|6|all|detail]" > "/dev/stderr"
       fatal = 1
       exit 2
    }
@@ -396,13 +402,14 @@ function g_reset_record() {
    g_current_committed = 0
 }
 
-function g_add_problem(name, prob, m) {
+function g_add_problem(name, prob, m, eps) {
    if (!(name in g_probseen)) {
       g_probseen[name] = 1
       g_problist[++g_probnum] = name
    }
    g_probtype[name] = prob
    g_mvalue[name] = m
+   g_epsvalue[name] = eps + 0
 }
 
 function g_is_solved_status(st) {
@@ -417,7 +424,7 @@ function g_commit_record(   key, denom) {
    if (g_tmptermination == "" && !g_native_finished)
       return
 
-   g_add_problem(g_current_name, g_current_prob, g_current_m)
+   g_add_problem(g_current_name, g_current_prob, g_current_m, g_current_eps)
    key = g_current_name SUBSEP g_current_method
    g_probfile[key] = 1
    g_status[key] = (g_is_solved_status(g_tmptermination) || g_native_solved) ? "ok" : "stopped"
@@ -1167,6 +1174,13 @@ function print_table5_dr_row() {
    finish_row()
 }
 
+function print_table5_num_row() {
+   printf("%s& \\texttt{\\#}", rowprefix)
+   for (m = 1; m <= nm; ++m)
+      printf(" & %d", mnumt[m])
+   finish_row()
+}
+
 function print_table5_value_row(method_label, metric_label, values, j, is_delta, is_ratio,   m) {
    printf("%s%s & %s", rowprefix, method_label, metric_label)
    for (m = 1; m <= nm; ++m) {
@@ -1253,6 +1267,7 @@ function print_table5(   I, J, K, ni, nj, nk, m, ii, jj, kk, inst, p, methods, a
    if (!rows_only)
       print "\t\t\\midrule"
    print_table5_dr_row()
+   print_table5_num_row()
    if (!rows_only)
       print "\t\t\\midrule"
    print_table5_value_row("\\texttt{BASE}", "\\texttt{S}", "solved", 1, 0, 0)
@@ -1279,160 +1294,6 @@ function print_table5(   I, J, K, ni, nj, nk, m, ii, jj, kk, inst, p, methods, a
       table5_end()
 }
 
-function init_table6(   e, j) {
-   ne = split("0.05 0.1 0.2", elist, " ")
-   for (e = 1; e <= ne; ++e) {
-      for (j = 1; j <= 4; ++j) {
-         esolved[e, j] = 0
-         eavetime[e, j] = 1
-         eavenodes[e, j] = 1
-      }
-      eavedr[e] = 1
-   }
-}
-
-function table6_begin() {
-   print "\\begin{table}[htbp]"
-   print "\t\\small"
-   print "\t\\centering"
-   print "\t\\caption{Performance comparison of settings \\texttt{BASE}, \\texttt{BASE+sDI}, \\texttt{BASE+DB}, and \\texttt{BASE+DB+OPF} with different values of $\\epsilon$ on the \\texttt{CCMPP} instances with $m\\in\\{10,20,30\\}$.}"
-   print "\t\\addtolength{\\tabcolsep}{1pt}"
-   print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}llrrr@{\\extracolsep\\fill}}"
-   print "\t\t\\toprule"
-}
-
-function table6_end() {
-   print "\t\t\\bottomrule"
-   print "\t\\end{tabular*}\\label{epsilon}"
-   print "\\end{table}"
-}
-
-function print_table6_header_row(   e) {
-   printf("%s& $\\epsilon$", rowprefix)
-   for (e = 1; e <= ne; ++e)
-      printf(" & %s", elist[e])
-   finish_row()
-}
-
-function print_table6_dr_row(   e) {
-   printf("%s& \\texttt{\\%%DP}", rowprefix)
-   for (e = 1; e <= ne; ++e)
-      printf(" & %.1f", round_to(eoutdr[e], 1))
-   finish_row()
-}
-
-function print_table6_value_row(method_label, metric_label, values, j, is_delta, is_ratio,   e) {
-   printf("%s%s & %s", rowprefix, method_label, metric_label)
-   for (e = 1; e <= ne; ++e) {
-      if (is_delta)
-         printf(" & %d", esolved[e, j] - esolved[e, 1])
-      else if (is_ratio) {
-         if (values == "time")
-            printf(" & %.1f", round_to(ratio(eouttime[e, 1], eouttime[e, j]), 1))
-         else
-            printf(" & %.1f", round_to(ratio(eoutnodes[e, 1], eoutnodes[e, j]), 1))
-      }
-      else if (values == "solved")
-         printf(" & %d", esolved[e, j])
-      else if (values == "time")
-         printf(" & %.1f", round_to(eouttime[e, j], 1))
-      else
-         printf(" & %d", round(eoutnodes[e, j]))
-   }
-   finish_row()
-}
-
-function print_table6(   M, I, J, nm6, ni, nj, e, mm, ii, jj, inst, p, methods, anyok, numt, numn, j, key, val) {
-   init_table6()
-   methods[1] = "BnC-MIX"
-   methods[2] = "BnC-MIX-sDI"
-   methods[3] = "DB"
-   methods[4] = "DB-OPF@14400"
-   nm6 = split("10 20 30", M, " ")
-   ni = split("1000 2000 3000", I, " ")
-   nj = split("0 1 2 3 4", J, " ")
-
-   for (e = 1; e <= ne; ++e) {
-      numt = 0
-      numn = 0
-      for (mm = 1; mm <= nm6; ++mm) {
-         for (ii = 1; ii <= ni; ++ii) {
-            for (jj = 1; jj <= nj; ++jj) {
-               inst = M[mm] "-" I[ii] "-" J[jj]
-               p = table5_key(inst, elist[e])
-
-               anyok = 0
-               for (j = 1; j <= 4; ++j) {
-                  key = p SUBSEP methods[j]
-                  if (status[key] == "ok") {
-                     anyok = 1
-                     ++esolved[e, j]
-                  }
-               }
-
-               if (anyok) {
-                  for (j = 1; j <= 4; ++j) {
-                     key = p SUBSEP methods[j]
-                     val = min(timev[key], timelimit)
-                     eavetime[e, j] = gmean_update(eavetime[e, j], val, timeshift, numt)
-                     eavenodes[e, j] = gmean_update(eavenodes[e, j], nodes[key], nodeshift, numn)
-                  }
-                  key = p SUBSEP methods[3]
-                  eavedr[e] = gmean_update(eavedr[e], dr[key], nodeshift, numt)
-                  ++numt
-                  ++numn
-               }
-            }
-         }
-      }
-      enumt[e] = numt
-      enumn[e] = numn
-   }
-
-   for (e = 1; e <= ne; ++e) {
-      eoutdr[e] = (enumt[e] == 0) ? 0 : eavedr[e] - nodeshift
-      for (j = 1; j <= 4; ++j) {
-         eouttime[e, j] = (enumt[e] == 0) ? 0 : eavetime[e, j] - timeshift
-         eoutnodes[e, j] = (enumn[e] == 0) ? 0 : eavenodes[e, j] - nodeshift
-      }
-   }
-
-   if (!rows_only)
-      table6_begin()
-   else
-      print "% Table 6"
-
-   rowprefix = rows_only ? "" : "\t\t"
-   print_table6_header_row()
-   if (!rows_only)
-      print "\t\t\\midrule"
-   print_table6_dr_row()
-   if (!rows_only)
-      print "\t\t\\midrule"
-   print_table6_value_row("\\texttt{BASE}", "\\texttt{S}", "solved", 1, 0, 0)
-   print_table6_value_row("", "\\texttt{T}", "time", 1, 0, 0)
-   print_table6_value_row("", "\\texttt{N}", "nodes", 1, 0, 0)
-   if (!rows_only)
-      print "\t\t\\midrule"
-   print_table6_value_row("\\texttt{BASE+sDI}", "\\texttt{$\\Delta$S}", "", 2, 1, 0)
-   print_table6_value_row("", "\\texttt{RT}", "time", 2, 0, 1)
-   print_table6_value_row("", "\\texttt{RN}", "nodes", 2, 0, 1)
-   if (!rows_only)
-      print "\t\t\\midrule"
-   print_table6_value_row("\\texttt{BASE+DB}", "\\texttt{$\\Delta$S}", "", 3, 1, 0)
-   print_table6_value_row("", "\\texttt{RT}", "time", 3, 0, 1)
-   print_table6_value_row("", "\\texttt{RN}", "nodes", 3, 0, 1)
-   if (!rows_only)
-      print "\t\t\\midrule"
-   print_table6_value_row("\\texttt{BASE+DB+OPF}", "\\texttt{$\\Delta$S}", "", 4, 1, 0)
-   print_table6_value_row("", "\\texttt{RT}", "time", 4, 0, 1)
-   print_table6_value_row("", "\\texttt{RN}", "nodes", 4, 0, 1)
-   rowprefix = ""
-
-   if (!rows_only)
-      table6_end()
-}
-
 function g_objective_to_3(value, rounded) {
    rounded = round_to(value, 3)
    if (rounded == 0)
@@ -1441,7 +1302,7 @@ function g_objective_to_3(value, rounded) {
 }
 
 function g_check_optimal_objectives(   methods, n, i, j, p, method, key, rounded, reference_found, reference_value, reference_method, checked, checked_instances, errors) {
-   methods = "BASE-MIX BASE BASE+DI BASE+sDI"
+   methods = "BASE BASE+sDI"
    n = split(methods, g_objective_method, " ")
    checked = 0
    checked_instances = 0
@@ -1481,83 +1342,6 @@ function g_check_optimal_objectives(   methods, n, i, j, p, method, key, rounded
    return errors
 }
 
-function g_eligible(p, probfilter) {
-   if (probfilter != "All" && g_probtype[p] != probfilter)
-      return 0
-   if (g_probtype[p] == "CCMPP")
-      return g_mvalue[p] == 10 || g_mvalue[p] == 20 || g_mvalue[p] == 30
-   return 1
-}
-
-function g_aggregate(probfilter,   methods, n, i, j, p, method, key, present, atleast, data) {
-   methods = "BASE-MIX BASE BASE+DI BASE+sDI"
-   n = split(methods, g_rowmethod, " ")
-   rown = 0
-
-   for (j = 1; j <= n; ++j) {
-      rowsolved[j] = 0
-      rowtime[j] = 1
-      rownodes[j] = 1
-      rowdr[j] = 1
-      rowtdr[j] = 1
-   }
-
-   for (i = 1; i <= g_probnum; ++i) {
-      p = g_problist[i]
-      if (!g_eligible(p, probfilter))
-         continue
-
-      present = 1
-      atleast = 0
-      for (j = 1; j <= n; ++j) {
-         method = g_rowmethod[j]
-         key = p SUBSEP method
-         if (g_probfile[key] != 1) {
-            present = 0
-            break
-         }
-         if (g_status[key] == "ok")
-            ++atleast
-      }
-
-      if (!present || atleast == 0)
-         continue
-
-      for (j = 1; j <= n; ++j) {
-         method = g_rowmethod[j]
-         key = p SUBSEP method
-         if (g_status[key] == "ok") {
-            ++rowsolved[j]
-            data = g_timev[key]
-         }
-         else
-            data = gurobi_timelimit
-
-         rowtime[j] = gmean_update(rowtime[j], data, timeshift, rown)
-         rownodes[j] = gmean_update(rownodes[j], g_nodes[key], nodeshift, rown)
-         rowdr[j] = gmean_update(rowdr[j], g_dr[key], nodeshift, rown)
-         rowtdr[j] = gmean_update(rowtdr[j], g_tdr[key], nodeshift, rown)
-      }
-      ++rown
-   }
-
-   for (j = 1; j <= n; ++j) {
-      if (rown == 0) {
-         outtime[j] = 0
-         outnodes[j] = 0
-         outdr[j] = 0
-         outtdr[j] = 0
-      }
-      else {
-         outtime[j] = rowtime[j] - timeshift
-         outnodes[j] = rownodes[j] - nodeshift
-         outdr[j] = rowdr[j] - nodeshift
-         outtdr[j] = rowtdr[j] - nodeshift
-      }
-   }
-   rowmethods = n
-}
-
 function g_print_metric(j) {
    if (rowsolved[j] == bestsolve)
       printf(" & \\textbf{%d}", rowsolved[j])
@@ -1575,264 +1359,169 @@ function g_print_metric(j) {
       printf(" & %d", round(outnodes[j]))
 }
 
-function print_table7_row(probfilter) {
-   g_aggregate(probfilter)
-   compute_best(rowmethods)
-   printf("\t\t%s & %d", label_prob(probfilter), rown)
+function table6_eps_allowed(family, eps) {
+   if (family == "CCRP")
+      return same(eps, 0.10) || same(eps, 0.15) || same(eps, 0.20)
+   return same(eps, 0.05) || same(eps, 0.10) || same(eps, 0.20)
+}
+
+function table6_aggregate(probfilter, targeteps,   i, j, p, family, gbase, gsdi, sopf, anyok, key, data, node_data) {
+   rown = 0
+   for (j = 1; j <= 3; ++j) {
+      rowsolved[j] = 0
+      rowtime[j] = 1
+      rownodes[j] = 1
+   }
+
+   for (i = 1; i <= g_probnum; ++i) {
+      p = g_problist[i]
+      family = g_probtype[p]
+      if (probfilter != "All" && family != probfilter)
+         continue
+      if (!table6_eps_allowed(family, g_epsvalue[p]))
+         continue
+      if (targeteps != "All" && !same(g_epsvalue[p], targeteps))
+         continue
+      if (family == "CCMPP" && g_mvalue[p] != 10 && g_mvalue[p] != 20 && g_mvalue[p] != 30)
+         continue
+
+      gbase = p SUBSEP "BASE"
+      gsdi = p SUBSEP "BASE+sDI"
+      sopf = p SUBSEP "DB-OPF@14400"
+      if (g_probfile[gbase] != 1 || g_probfile[gsdi] != 1 || probfile[sopf] != 1)
+         continue
+
+      anyok = (g_status[gbase] == "ok" || g_status[gsdi] == "ok" || status[sopf] == "ok")
+      if (!anyok)
+         continue
+
+      for (j = 1; j <= 3; ++j) {
+         if (j == 1) {
+            key = gbase
+            if (g_status[key] == "ok") {
+               ++rowsolved[j]
+               data = min(g_timev[key], timelimit)
+            }
+            else
+               data = timelimit
+            node_data = g_nodes[key]
+         }
+         else if (j == 2) {
+            key = gsdi
+            if (g_status[key] == "ok") {
+               ++rowsolved[j]
+               data = min(g_timev[key], timelimit)
+            }
+            else
+               data = timelimit
+            node_data = g_nodes[key]
+         }
+         else {
+            key = sopf
+            if (status[key] == "ok") {
+               ++rowsolved[j]
+               data = min(timev[key], timelimit)
+            }
+            else
+               data = timelimit
+            node_data = nodes[key]
+         }
+
+         rowtime[j] = gmean_update(rowtime[j], data, timeshift, rown)
+         rownodes[j] = gmean_update(rownodes[j], node_data, nodeshift, rown)
+      }
+      ++rown
+   }
+
+   for (j = 1; j <= 3; ++j) {
+      if (rown == 0) {
+         outtime[j] = 0
+         outnodes[j] = 0
+      }
+      else {
+         outtime[j] = rowtime[j] - timeshift
+         outnodes[j] = rownodes[j] - nodeshift
+      }
+   }
+   compute_best(3)
+}
+
+function table6_begin() {
+   print "\\begin{table}[htbp]"
+   print "\t\\small"
+   print "\t\\centering"
+   print "\t\\renewcommand{\\arraystretch}{0.9}"
+   print "\t\\addtolength{\\tabcolsep}{-1pt}"
+   print "\t\\caption{Performance comparison of settings \\texttt{G-BASE}, \\texttt{G-BASE+sDI}, and \\texttt{BASE+DB+OPF}.}"
+   print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}llrrrrrrrrrr@{\\extracolsep\\fill}}"
+   print "\t\t\\toprule"
+   print "\t\t\\multirow{2}{*}{\\texttt{Probs}} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{\\texttt{\\#}}"
+   print "\t\t& \\multicolumn{3}{c}{\\texttt{G-BASE}} & \\multicolumn{3}{c}{\\texttt{G-BASE+sDI}} & \\multicolumn{3}{c}{\\texttt{BASE+DB+OPF}} \\\\"
+   print "\t\t\\cmidrule(l{4pt}r{3pt}){4-6} \\cmidrule(l{4pt}r{3pt}){7-9} \\cmidrule(l{4pt}r{3pt}){10-12}"
+   print "\t\t& & & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{S} & \\texttt{T} & \\texttt{N} \\\\"
+   print "\t\t\\midrule"
+}
+
+function table6_end() {
+   print "\t\t\\bottomrule"
+   print "\t\\end{tabular*}"
+   print "\t\\label{gurobi-scip-three-problems}"
+   print "\\end{table}"
+}
+
+function print_table6_row(probfilter, targeteps, firstrow, problabel, epslabel) {
+   table6_aggregate(probfilter, targeteps)
+   if (probfilter == "All")
+      problabel = label_prob(probfilter)
+   else
+      problabel = firstrow ? "\\multirow{4}{*}{" label_prob(probfilter) "}" : ""
+   if (targeteps == "All")
+      epslabel = (probfilter == "All") ? "" : "\\texttt{All}"
+   else
+      epslabel = sprintf("%.2f", targeteps)
+   if (probfilter == "All")
+      printf("\t\t%s & & %d", problabel, rown)
+   else
+      printf("\t\t%s & %s & %d", problabel, epslabel, rown)
    g_print_metric(1)
    g_print_metric(2)
    g_print_metric(3)
-   printf(" & %.1f & %.1f", round_to(outdr[3], 1), round_to(outtdr[3], 1))
-   g_print_metric(4)
-   printf(" & %.1f & %.1f", round_to(outdr[4], 1), round_to(outtdr[4], 1))
    finish_row()
 }
 
-function table7_begin() {
-   print "\\begin{table}[htbp]"
-   print "\t\\small"
-   print "\t\\centering"
-   print "\t\\addtolength{\\tabcolsep}{-3pt}"
-   print "\t\\caption{Performance comparison of settings \\texttt{BASE-MIX}, \\texttt{BASE}, \\texttt{BASE+DI}, and \\texttt{BASE+sDI} using Gurobi.}"
-   print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}lrrrrrrrrrrrrrrrrr@{\\extracolsep\\fill}}"
-   print "\t\t\\toprule"
-   print "\t\t\\multirow{2}{*}{\\texttt{Probs}} & \\multirow{2}{*}{\\texttt{\\#}}"
-   print "\t\t& \\multicolumn{3}{c}{\\texttt{BASE-MIX}} & \\multicolumn{3}{c}{\\texttt{BASE}} & \\multicolumn{5}{c}{\\texttt{BASE+DI}} & \\multicolumn{5}{c}{\\texttt{BASE+sDI}} \\\\"
-   print "\t\t\\cmidrule(l{4pt}r{3pt}){3-5} \\cmidrule(l{4pt}r{3pt}){6-8} \\cmidrule(l{4pt}r{3pt}){9-13} \\cmidrule(l{4pt}r{3pt}){14-18}"
-   print "\t\t& & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{\\%DP} & \\texttt{\\%NDI} & \\texttt{S} & \\texttt{T} & \\texttt{N} & \\texttt{\\%DP} & \\texttt{\\%NDI} \\\\"
-   print "\t\t\\midrule"
-}
-
-function table7_end() {
-   print "\t\t\\bottomrule"
-   print "\t\\end{tabular*}"
-   print "\t\\label{gurobi-four-settings}"
-   print "\\end{table}"
-}
-
-function print_table7() {
-   if (prob == "" && !rows_only) {
-      table7_begin()
-      print_table7_row("CCRP")
-      print_table7_row("CCMPP")
-      print_table7_row("CCLS")
-      print "\t\t\\midrule"
-      print_table7_row("All")
-      table7_end()
-      return
-   }
-
-   print "% Table 7"
-   if (prob != "") {
-      print_table7_row(prob)
-      return
-   }
-   print_table7_row("CCRP")
-   print_table7_row("CCMPP")
-   print_table7_row("CCLS")
-   print_table7_row("All")
-}
-
-function init_table8(   c, j) {
-   t8_ncols = 6
-   for (c = 1; c <= t8_ncols; ++c) {
-      t8_count[c] = 0
-      for (j = 1; j <= 3; ++j) {
-         t8_solved[c, j] = 0
-         t8_avetime[c, j] = 1
-         t8_avenodes[c, j] = 1
-      }
-   }
-}
-
-function table8_consider(col, p, gbase, gsdi, sopf, anyok, j, key, data, node_data, n) {
-   gbase = p SUBSEP "BASE"
-   gsdi = p SUBSEP "BASE+sDI"
-   sopf = p SUBSEP "DB-OPF@14400"
-
-   if (g_probfile[gbase] != 1 || g_probfile[gsdi] != 1 || probfile[sopf] != 1)
-      return
-
-   anyok = (g_status[gbase] == "ok" || g_status[gsdi] == "ok" || status[sopf] == "ok")
-   if (!anyok)
-      return
-
-   n = t8_count[col]
-   for (j = 1; j <= 3; ++j) {
-      if (j == 1) {
-         key = gbase
-         if (g_status[key] == "ok") {
-            ++t8_solved[col, j]
-            data = min(g_timev[key], timelimit)
-         }
-         else
-            data = timelimit
-         node_data = g_nodes[key]
-      }
-      else if (j == 2) {
-         key = gsdi
-         if (g_status[key] == "ok") {
-            ++t8_solved[col, j]
-            data = min(g_timev[key], timelimit)
-         }
-         else
-            data = timelimit
-         node_data = g_nodes[key]
-      }
-      else {
-         key = sopf
-         if (status[key] == "ok") {
-            ++t8_solved[col, j]
-            data = min(timev[key], timelimit)
-         }
-         else
-            data = timelimit
-         node_data = nodes[key]
-      }
-
-      t8_avetime[col, j] = gmean_update(t8_avetime[col, j], data, timeshift, n)
-      t8_avenodes[col, j] = gmean_update(t8_avenodes[col, j], node_data, nodeshift, n)
-   }
-   ++t8_count[col]
-}
-
-function finish_table8(   c, j) {
-   for (c = 1; c <= t8_ncols; ++c) {
-      for (j = 1; j <= 3; ++j) {
-         if (t8_count[c] == 0) {
-            t8_outtime[c, j] = 0
-            t8_outnodes[c, j] = 0
-         }
-         else {
-            t8_outtime[c, j] = t8_avetime[c, j] - timeshift
-            t8_outnodes[c, j] = t8_avenodes[c, j] - nodeshift
-         }
-      }
-
-      t8_bestsolve[c] = t8_solved[c, 1]
-      t8_besttime[c] = t8_outtime[c, 1]
-      t8_bestnodes[c] = t8_outnodes[c, 1]
-      for (j = 2; j <= 3; ++j) {
-         if (t8_solved[c, j] > t8_bestsolve[c])
-            t8_bestsolve[c] = t8_solved[c, j]
-         if (t8_outtime[c, j] < t8_besttime[c])
-            t8_besttime[c] = t8_outtime[c, j]
-         if (t8_outnodes[c, j] < t8_bestnodes[c])
-            t8_bestnodes[c] = t8_outnodes[c, j]
-      }
-   }
-}
-
-function table8_begin() {
-   print "\\begin{table}[htbp]"
-   print "\t\\small"
-   print "\t\\centering"
-   print "\t\\caption{Performance comparison of settings \\texttt{BASE(Gurobi)}, \\texttt{BASE+sDI(Gurobi)}, and \\texttt{BASE+DB+OPF(SCIP)} on the \\texttt{CCMPP} instances.}"
-   print "\t\\addtolength{\\tabcolsep}{1pt}"
-   print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}llrrrrrr@{\\extracolsep\\fill}}"
-   print "\t\t\\toprule"
-   print "\t\t\\multirow{2}{*}{} & \\multirow{2}{*}{} & \\multicolumn{3}{c}{Grouped by $m$} & \\multicolumn{3}{c}{Grouped by $\\epsilon$} \\\\"
-   print "\t\t\\cmidrule(l{4pt}r{3pt}){3-5} \\cmidrule(l{4pt}r{3pt}){6-8}"
-   print "\t\t& & $m=10$ & $m=20$ & $m=30$ & $\\epsilon=0.05$ & $\\epsilon=0.1$ & $\\epsilon=0.2$ \\\\"
-   print "\t\t\\midrule"
-}
-
-function table8_end() {
-   print "\t\t\\bottomrule"
-   print "\t\\end{tabular*}"
-   print "\t\\label{gurobi-scip-ccmpp}"
-   print "\\end{table}"
-}
-
-function print_table8_metric(method_label, metric, j,   c, value, best) {
-   printf("%s%s & \\texttt{%s}", rowprefix, method_label, metric)
-   for (c = 1; c <= t8_ncols; ++c) {
-      if (metric == "S") {
-         value = t8_solved[c, j]
-         best = t8_bestsolve[c]
-         if (value == best)
-            printf(" & \\textbf{%d}", value)
-         else
-            printf(" & %d", value)
-      }
-      else if (metric == "T") {
-         value = t8_outtime[c, j]
-         best = t8_besttime[c]
-         if (same(value, best))
-            printf(" & \\textbf{%.1f}", round_to(value, 1))
-         else
-            printf(" & %.1f", round_to(value, 1))
-      }
-      else {
-         value = t8_outnodes[c, j]
-         best = t8_bestnodes[c]
-         if (same(value, best))
-            printf(" & \\textbf{%d}", round(value))
-         else
-            printf(" & %d", round(value))
-      }
-   }
-   finish_row()
-}
-
-function print_table8(   M, I, J, K, nm8, ni, nj, nk, mm, ii, jj, kk, inst, p, c) {
-   init_table8()
-   nm8 = split("10 20 30", M, " ")
-   ni = split("1000 2000 3000", I, " ")
-   nj = split("0 1 2 3 4", J, " ")
-   nk = split("0.05 0.1 0.2", K, " ")
-
-   for (mm = 1; mm <= nm8; ++mm) {
-      c = mm
-      for (ii = 1; ii <= ni; ++ii) {
-         for (jj = 1; jj <= nj; ++jj) {
-            for (kk = 1; kk <= nk; ++kk) {
-               inst = M[mm] "-" I[ii] "-" J[jj]
-               p = table5_key(inst, K[kk])
-               table8_consider(c, p)
-            }
-         }
-      }
-   }
-
-   for (kk = 1; kk <= nk; ++kk) {
-      c = nm8 + kk
-      for (mm = 1; mm <= nm8; ++mm) {
-         for (ii = 1; ii <= ni; ++ii) {
-            for (jj = 1; jj <= nj; ++jj) {
-               inst = M[mm] "-" I[ii] "-" J[jj]
-               p = table5_key(inst, K[kk])
-               table8_consider(c, p)
-            }
-         }
-      }
-   }
-
-   finish_table8()
-
-   if (!rows_only)
-      table8_begin()
+function print_table6_problem(probfilter,   epslist, neps, e) {
+   if (probfilter == "CCRP")
+      neps = split("0.10 0.15 0.20", epslist, " ")
    else
-      print "% Table 8"
+      neps = split("0.05 0.10 0.20", epslist, " ")
 
-   rowprefix = rows_only ? "" : "\t\t"
-   print_table8_metric("\\texttt{BASE(Gurobi)}", "S", 1)
-   print_table8_metric("", "T", 1)
-   print_table8_metric("", "N", 1)
+   for (e = 1; e <= neps; ++e)
+      print_table6_row(probfilter, epslist[e] + 0, e == 1)
    if (!rows_only)
-      print "\t\t\\midrule"
-   print_table8_metric("\\texttt{BASE+sDI(Gurobi)}", "S", 2)
-   print_table8_metric("", "T", 2)
-   print_table8_metric("", "N", 2)
+      print "\t\t\\cmidrule{2-12}"
+   print_table6_row(probfilter, "All", 0)
+}
+
+function print_table6() {
    if (!rows_only)
-      print "\t\t\\midrule"
-   print_table8_metric("\\texttt{BASE+DB+OPF(SCIP)}", "S", 3)
-   print_table8_metric("", "T", 3)
-   print_table8_metric("", "N", 3)
-   rowprefix = ""
+      table6_begin()
+   else
+      print "% Table 6"
+
+   if (prob != "" && prob != "All")
+      print_table6_problem(prob)
+   else {
+      print_table6_problem("CCRP")
+      if (!rows_only)
+         print "\t\t\\midrule"
+      print_table6_problem("CCMPP")
+      if (!rows_only)
+         print "\t\t\\midrule"
+      print_table6_problem("CCLS")
+   }
 
    if (!rows_only)
-      table8_end()
+      table6_end()
 }
 
 function ratio(a, b) {
@@ -2313,7 +2002,7 @@ END {
    if (fatal)
       exit 2
 
-   if ((table == "7" || table == "all") && g_probnum > 0) {
+   if ((table == "6" || table == "all") && g_probnum > 0) {
       if (g_check_optimal_objectives() > 0)
          exit 3
    }
@@ -2328,12 +2017,8 @@ END {
       print_table4()
    else if (table == "5")
       print_table5()
-   else if (table == "6" || table == "epsilon")
+   else if (table == "6")
       print_table6()
-   else if (table == "7")
-      print_table7()
-   else if (table == "8")
-      print_table8()
    else if (table == "detail" || detail)
       print_detail_tables()
    else {
@@ -2346,15 +2031,9 @@ END {
       print_table4()
       print ""
       print_table5()
-      print ""
-      print_table6()
-      if (g_probnum > 0) {
-         print ""
-         print_table7()
-      }
       if (g_probnum > 0 && probnum > 0) {
          print ""
-         print_table8()
+         print_table6()
       }
    }
 
