@@ -662,11 +662,15 @@ FNR == 1 {
    }
 }
 
+function ccmpp_main_dimension(m) {
+   return m == 10 || m == 20 || m == 30
+}
+
 function eligible(prob, probfilter, family) {
    if (probfilter != "All" && probtype[prob] != probfilter)
       return 0
-   if (family == "main" && probtype[prob] == "CCMPP") {
-      if (mvalue[prob] != 10 && mvalue[prob] != 20 && mvalue[prob] != 30)
+   if (family != "table5" && probtype[prob] == "CCMPP") {
+      if (!ccmpp_main_dimension(mvalue[prob]))
          return 0
    }
    return 1
@@ -1319,6 +1323,8 @@ function g_check_optimal_objectives(   methods, n, i, j, p, method, key, rounded
 
    for (i = 1; i <= g_probnum; ++i) {
       p = g_problist[i]
+      if (g_probtype[p] == "CCMPP" && !ccmpp_main_dimension(g_mvalue[p]))
+         continue
       reference_found = 0
 
       for (j = 1; j <= n; ++j) {
@@ -1391,7 +1397,7 @@ function table6_aggregate(probfilter, targeteps,   i, j, p, family, gbase, gsdi,
          continue
       if (targeteps != "All" && !same(g_epsvalue[p], targeteps))
          continue
-      if (family == "CCMPP" && g_mvalue[p] != 10 && g_mvalue[p] != 20 && g_mvalue[p] != 30)
+      if (family == "CCMPP" && !ccmpp_main_dimension(g_mvalue[p]))
          continue
 
       gbase = p SUBSEP "BASE"
@@ -1955,7 +1961,7 @@ function detail_testm_begin(s) {
 }
 
 function print_detail_testm(   r, prob, key) {
-   collect_detail_rows("CCMPP", "BnC-MIX BnC-MIX-sDI DB DB-OPF@14400", "all")
+   collect_detail_rows("CCMPP", "BnC-MIX BnC-MIX-sDI DB DB-OPF@14400", "table5")
    detail_testm_begin()
    detail_printed = 0
    for (r = 1; r <= detailrows; ++r) {
