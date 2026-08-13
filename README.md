@@ -98,24 +98,14 @@ For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` w
 ```
 
 ### 🔁 Replicating
-To reproduce the computational results presented in the paper, please run
+To reproduce the computational results presented in the paper and the Online Supplement, please run
 
 ```bash
-awk -f scripts/CCP.awk -v ResultSCIP=<results-scip> -v ResultGurobi=<results-gurobi> -v table=<T> > <output-file>
+awk -f scripts/CCP.awk -v ResultSCIP=results-scip -v ResultGurobi=results-gurobi -v table=<T> > <output-file>
 ```
 
-Here:
-
-- `<results-scip>` denotes the directory containing the log files produced by SCIP;
-- `<results-gurobi>` denotes the directory containing the log files produced by Gurobi; and
-- `<T>` is chosen from `{1, 2, 3, 4, 5, 6, all, detail}`. Values `1`--`6` generate the corresponding table in the paper, `all` generates all tables in the paper, and `detail` generates the detailed statistics of instance-wise computational results in the online supplement.
-
-For example, to reproduce all tables presented in the paper, please run:
-
-```bash
-awk -f scripts/CCP.awk -v ResultSCIP=results-scip -v ResultGurobi=results-gurobi -v table=all > PaperTables.txt
-```
-This command writes the LaTeX source code for all tables in the paper to `PaperTables.txt`. You can then copy the table source code from `PaperTables.txt` into the [Springer Nature LaTeX template](https://www.springernature.com/gp/authors/campaigns/latex-author-support) for further editing.
+Here, `<T>` is chosen from `{s-all, d-all}`, where `s-all` generates the LaTeX source code for Tables 1--6 of the revised manuscript and `d-all` generates the detailed tables in the Online Supplement, and `<output-file>` denotes the file to which the generated LaTeX source code is written. 
+<!-- The generated tables can be used with the [Springer Nature LaTeX template](https://www.springernature.com/gp/authors/campaigns/latex-author-support). -->
 
 ### 📊 Detailed computational results
 Detailed statistics of instance-wise computational results can be found in the online supplement available at [My Google Drive](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link)

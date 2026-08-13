@@ -7,10 +7,15 @@ BEGIN {
    nodeshift = 100
 
    if (table == "")
-      table = "all"
+      table = "s-all"
 
-   if (table !~ /^(1|2|3|4|5|6|all|detail)$/) {
-      printf "ERROR: unsupported table '%s'; use 1, 2, 3, 4, 5, 6, all, or detail\n", table > "/dev/stderr"
+   if (table == "all")
+      table = "s-all"
+   else if (table == "detail")
+      table = "d-all"
+
+   if (table !~ /^(1|2|3|4|5|6|s-all|d-all)$/) {
+      printf "ERROR: unsupported table '%s'; use 1, 2, 3, 4, 5, 6, s-all, or d-all\n", table > "/dev/stderr"
       fatal = 1
       exit 2
    }
@@ -27,7 +32,7 @@ BEGIN {
       add_files_from_dir(root)
 
    if (ARGC <= 1 && root == "" && ResultSCIP == "" && ResultGurobi == "") {
-      print "usage: awk -f scripts/CCP.awk [-v ResultSCIP=results-scip] [-v ResultGurobi=results-gurobi] [-v table=1|2|3|4|5|6|all|detail]" > "/dev/stderr"
+      print "usage: awk -f scripts/CCP.awk [-v ResultSCIP=results-scip] [-v ResultGurobi=results-gurobi] [-v table=1|2|3|4|5|6|s-all|d-all]" > "/dev/stderr"
       fatal = 1
       exit 2
    }
@@ -2006,7 +2011,7 @@ END {
    if (fatal)
       exit 2
 
-   if ((table == "6" || table == "all") && g_probnum > 0) {
+   if ((table == "6" || table == "s-all") && g_probnum > 0) {
       if (g_check_optimal_objectives() > 0)
          exit 3
    }
@@ -2023,7 +2028,7 @@ END {
       print_table5()
    else if (table == "6")
       print_table6()
-   else if (table == "detail" || detail)
+   else if (table == "d-all" || detail)
       print_detail_tables()
    else {
       print_table1()
