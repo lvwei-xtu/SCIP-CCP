@@ -183,7 +183,9 @@ function parse_result_path(path, bn, stem, p, rest, d, prob_lc, suffix) {
    suffix = suffix_from_lc(prob_lc)
    current_m = first_token(current_instance)
 
-   if (path ~ /\/(DB-OPF|BASE\+DB\+OPF)\/86400\//)
+   if (path ~ /\/(DB-OPF|BASE\+DB\+OPF)\/14400-table6\//)
+      current_limit = "14400-table6"
+   else if (path ~ /\/(DB-OPF|BASE\+DB\+OPF)\/86400\//)
       current_limit = "86400"
    else if (path ~ /\/(DB-OPF|BASE\+DB\+OPF)\/14400\//)
       current_limit = "14400"
@@ -1265,9 +1267,11 @@ function print_table5(   I, J, K, ni, nj, nk, m, ii, jj, kk, inst, p, methods, a
    rowprefix = rows_only ? "" : "\t\t"
    print_table5_header_row()
    if (!rows_only)
-      print "\t\t\\midrule"
-   print_table5_dr_row()
+      print "\t\t\\cmidrule{2-8}"
    print_table5_num_row()
+   if (!rows_only)
+      print "\t\t\\cmidrule{2-8}"
+   print_table5_dr_row()
    if (!rows_only)
       print "\t\t\\midrule"
    print_table5_value_row("\\texttt{BASE}", "\\texttt{S}", "solved", 1, 0, 0)
@@ -1387,7 +1391,7 @@ function table6_aggregate(probfilter, targeteps,   i, j, p, family, gbase, gsdi,
 
       gbase = p SUBSEP "BASE"
       gsdi = p SUBSEP "BASE+sDI"
-      sopf = p SUBSEP "DB-OPF@14400"
+      sopf = p SUBSEP "DB-OPF@14400-table6"
       if (g_probfile[gbase] != 1 || g_probfile[gsdi] != 1 || probfile[sopf] != 1)
          continue
 

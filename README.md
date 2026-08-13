@@ -67,29 +67,55 @@ and build the executable using the ```make``` command. For more details, refer t
 
 ### 🏃 Usage
 
-- In the root directory, run the following commands to test the CCMPP instance ```10-1000-0.ccmpp``` with $\epsilon=0.1$ under different settings:
+- In the root directory, use the following command to solve an instance:
+
+```bash
+./build/ccp -f data/<P>Data/<filename> -s settings/<P>Setting/<S><E>.set
+```
+
+Here:
+
+- `<P>` denotes the problem type, chosen from `{CCRP, CCMPP, CCLS}`;
+- `<S>` denotes the setting, chosen from `{BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF, BASE+DB+EOPF}`;
+- `<E>` encodes the value of $\epsilon$: for CCMPP and CCLS, `05`, `1`, and `2` correspond to $\epsilon=0.05$, $0.1$, and $0.2$, respectively; for CCRP, `1`, `15`, and `2` correspond to $\epsilon=0.1$, $0.15$, and $0.2$, respectively; and
+- `<filename>` denotes the name of an instance in the corresponding data directory.
+
+For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` with $\epsilon=0.05$ under different settings:
 
 ```bash
 # setting BASE
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE05.set
 # setting BASE+DI
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DI1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DI05.set
 # setting BASE+sDI
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+sDI1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+sDI05.set
 # setting BASE+DB
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB05.set
 # setting BASE+DB+OPF
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB+OPF1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB+OPF05.set
 # setting BASE+DB+EOPF
-./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB+EOPF1.set
+./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB+EOPF05.set
 ```
 
 ### 🔁 Replicating
-To reproduce the computational results presented in the paper, please run:
+To reproduce the computational results presented in the paper, please run
+
 ```bash
-awk -f scripts/CCP.awk -v root=results -v table=all > PaperTables.txt
+awk -f scripts/CCP.awk -v ResultSCIP=<results-scip> -v ResultGurobi=<results-gurobi> -v table=<T> > <output-file>
 ```
-This command writes the LaTeX source code for all tables in the paper to the `PaperTables.txt`. You can then copy the table source code from `PaperTables.txt` into the [Springer Nature's LaTeX template](https://www.springernature.com/gp/authors/campaigns/latex-author-support) for further editing.
+
+Here:
+
+- `<results-scip>` denotes the directory containing the log files produced by SCIP;
+- `<results-gurobi>` denotes the directory containing the log files produced by Gurobi; and
+- `<T>` is chosen from `{1, 2, 3, 4, 5, 6, all, detail}`. Values `1`--`6` generate the corresponding table in the paper, `all` generates all tables in the paper, and `detail` generates the detailed statistics of instance-wise computational results in the online supplement.
+
+For example, to reproduce all tables presented in the paper, please run:
+
+```bash
+awk -f scripts/CCP.awk -v ResultSCIP=results-scip -v ResultGurobi=results-gurobi -v table=all > PaperTables.txt
+```
+This command writes the LaTeX source code for all tables in the paper to `PaperTables.txt`. You can then copy the table source code from `PaperTables.txt` into the [Springer Nature LaTeX template](https://www.springernature.com/gp/authors/campaigns/latex-author-support) for further editing.
 
 ### 📊 Detailed computational results
 Detailed statistics of instance-wise computational results can be found in the online supplement available at [My Google Drive](https://drive.google.com/file/d/1hZnv0jgoFUjyIS7Fwyo6bA_6p1tu9yil/view?usp=share_link)
