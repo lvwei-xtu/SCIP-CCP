@@ -104,8 +104,9 @@ To reproduce the computational results presented in the paper and the Online Sup
 ```bash
 awk -f scripts/CCP.awk -v ResultSCIP=results-scip -v ResultGurobi=results-gurobi -v table=<T> > <output-file>
 ```
-
-Here, `<T>` is chosen from `{s-all, d-all}`, where `s-all` generates the LaTeX source code for Tables 1--6 of the revised manuscript and `d-all` generates the detailed tables in the Online Supplement, and `<output-file>` denotes the file to which the generated LaTeX source code is written. 
+where `<T>` is chosen from `{s-all, d-all}` 
+and `<output-file>` denotes the file to which the generated LaTeX source code is written.  
+Here, `s-all` generates all summary Tables 1--6 of the paper and `d-all` generates the detailed instance-wise tables in the Online Supplement.
 <!-- The generated tables can be used with the [Springer Nature LaTeX template](https://www.springernature.com/gp/authors/campaigns/latex-author-support). -->
 
 ### 📊 Detailed computational results
