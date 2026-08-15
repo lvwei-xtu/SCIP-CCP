@@ -18,6 +18,7 @@ This repository contains the source code, instances, and detailed results of the
 SCIP-CCP
 ├── CMakeLists.txt      # CMake build configuration script
 ├── src/                # Source code for implementing the proposed approaches
+├── Gurobi-Julia/       # Proposed approaches were implemented in Julia using Gurobi
 ├── data/               # Benchmark instances (CCRP, CCMPP, CCLS)
 ├── settings/           # Configuration files with different settings
 └── results-scip/       # Logfiles produced by SCIP in the computational experiments
