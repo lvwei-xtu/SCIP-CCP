@@ -4,7 +4,7 @@
 
 ### 📖 Description
 
-This directory contains the Julia implementation used to compare the performance of the proposed approaches with the use of [Gurobi](https://www.gurobi.com/) (with the mixing cuts of Luedtke et al. (2010)) in Table 6 of the paper **"Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side"**. 
+This directory contains the Julia implementation used to compare the proposed approaches with [Gurobi](https://www.gurobi.com/) (with the mixing cuts of Luedtke et al. (2010)) as reported in Table 6 of the paper **"Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side"**.
 
 In particular, we compare the following two settings:
 
