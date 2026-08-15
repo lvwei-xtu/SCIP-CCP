@@ -1,33 +1,59 @@
 # Gurobi implementation in Julia
+
 ---
 
-This directory implements the `BASE-MIX` and `BASE+sDI` settings with JuMP and Gurobi, denoted as `G-BASE-MIX` and  `G-BASE+sDI`:
-- `G-BASE-MIX`: solving formulation (MILP) using the \BnC algorithm of Gurobi with the mixing cuts of \cite{Luedtke2010a}
-- `G-BASE+sDI`: `G-BASE-MIX` with the proposed dominance inequalities in (32).
+### 📖 Description
 
-## Installation
+This directory contains the Julia implementation used to compare Gurobi with SCIP in the computational experiments of the paper **"Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side"**. The implementation uses [JuMP](https://jump.dev/JuMP.jl/stable/) to model the original CCRP, CCMPP, and CCLS instances and [Gurobi](https://www.gurobi.com/) to solve them.
 
-Install Julia 1.11.7, Gurobi, and a valid Gurobi license. Then run:
+The following two settings are reported in the paper:
+
+- `G-BASE`: solves formulation (MILP) using the B&C algorithm of Gurobi with the mixing cuts Luedtke et al. (2010).
+- `G-BASE+sDI`: `G-BASE` with the proposed dominance inequalities in (32).
+  
+### 📦 Dependencies & Installation
+
+To run this implementation on a `Linux` system, install **Julia 1.11.7**, **Gurobi 12.0.3**, and a valid Gurobi license. Instructions for configuring a local Gurobi installation and license are available in the [Gurobi.jl documentation](https://jump.dev/JuMP.jl/stable/packages/Gurobi/).
+
+From the repository root, instantiate the Julia project by running:
 
 ```bash
-cd Gurobi-Julia
-julia --project=. -e 'using Pkg; Pkg.instantiate()'
+julia --project=Gurobi-Julia -e 'using Pkg; Pkg.instantiate()'
 ```
 
-Gurobi.jl documents the supported local-installation and license options at
-<https://jump.dev/JuMP.jl/stable/packages/Gurobi/>.
-
-## Usage
-
-Run commands from the repository root. For example:
+To verify that Julia can load the Gurobi interface and create a solver environment, run:
 
 ```bash
-# BASE-MIX
-julia --project=Gurobi-Julia Gurobi-Julia/solve.jl \
-  --instance data/CCMPPData/10-1000-0.ccmpp \
-  --setting BASE-MIX --epsilon 0.1
+julia --project=Gurobi-Julia -e 'using Gurobi; Gurobi.Env(); println("Gurobi environment created successfully")'
+```
 
-# BASE+sDI
+### 🏃 Usage
+
+From the repository root, use the following command to solve an instance:
+
+```bash
+julia --project=Gurobi-Julia Gurobi-Julia/solve.jl \
+  --instance data/<P>Data/<filename> \
+  --setting <S> --epsilon <E>
+```
+
+Here:
+
+- `<P>` denotes the problem type, chosen from `{CCRP, CCMPP, CCLS}`;
+- `<S>` denotes the setting, chosen from `{G-BASE, G-BASE+sDI}`;  
+- `<E>` encodes the value of $\epsilon$: for CCMPP and CCLS, `05`, `1`, and `2` correspond to $\epsilon=0.05$, $0.1$, and $0.2$, respectively; for CCRP, `1`, `15`, and `2` correspond to $\epsilon=0.1$, $0.15$, and $0.2$, respectively; and
+- `<filename>` denotes the name of an instance in the corresponding data directory.
+
+For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` with $\epsilon=0.05$ under the two settings reported in the paper:
+
+```bash
+# setting G-BASE
 julia --project=Gurobi-Julia Gurobi-Julia/solve.jl \
   --instance data/CCMPPData/10-1000-0.ccmpp \
-  --setting BASE+sDI --epsilon 0.1
+  --setting BASE --epsilon 0.05
+
+# setting G-BASE+sDI
+julia --project=Gurobi-Julia Gurobi-Julia/solve.jl \
+  --instance data/CCMPPData/10-1000-0.ccmpp \
+  --setting BASE+sDI --epsilon 0.05
+```

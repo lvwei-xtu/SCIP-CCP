@@ -525,7 +525,7 @@ function usage(io::IO=stdout)
         "  --setting BASE-MIX|BASE|BASE+DI|BASE+sDI|BASE+DB   default: BASE",
     )
     println(io, "  --epsilon VALUE                  default: 0.1")
-    println(io, "  --time-limit SECONDS             default: 7200")
+    println(io, "  --time-limit SECONDS             default: 14400")
     println(io, "  --threads COUNT                  default: 1")
     println(io, "  --mip-gap VALUE                  default: 0")
     println(io, "  --equal-probability BOOL         default: true")
@@ -582,7 +582,7 @@ function main(args::Vector{String}=ARGS)
         epsilon=parse(Float64, get(values, "--epsilon", "0.1")),
         setting=parse_setting(get(values, "--setting", "BASE")),
         equal_probability=parse_bool(get(values, "--equal-probability", "true")),
-        time_limit=parse(Float64, get(values, "--time-limit", "7200")),
+        time_limit=parse(Float64, get(values, "--time-limit", "14400")),
         threads=parse(Int, get(values, "--threads", "1")),
         mip_gap=parse(Float64, get(values, "--mip-gap", "0")),
         output_flag=parse(Int, get(values, "--output-flag", "1")),

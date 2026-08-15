@@ -397,6 +397,7 @@ function g_parse_result_path(path, bn, stem, p, rest, marker, prob_lc, suffix) {
 function g_reset_record() {
    g_tmptime = -1
    g_tmpnode = -1
+   g_tmpgap = -1
    g_tmpobjective = 0
    g_tmpobjective_seen = 0
    g_tmpscennum = 0
@@ -434,9 +435,12 @@ function g_commit_record(   key, denom) {
    g_add_problem(g_current_name, g_current_prob, g_current_m, g_current_eps)
    key = g_current_name SUBSEP g_current_method
    g_probfile[key] = 1
+   delete g_badfile[key]
    g_status[key] = (g_is_solved_status(g_tmptermination) || g_native_solved) ? "ok" : "stopped"
    g_timev[key] = (g_tmptime < 0) ? gurobi_timelimit : g_tmptime
    g_nodes[key] = (g_tmpnode < 0) ? 0 : g_tmpnode
+   if (g_tmpgap >= 0)
+      g_gaps[key] = g_tmpgap * 100
    if (g_tmpobjective_seen) {
       g_objective[key] = g_tmpobjective
       g_objective_seen[key] = 1
@@ -448,12 +452,17 @@ function g_commit_record(   key, denom) {
    g_current_committed = 1
 }
 
-function g_finish_file() {
+function g_finish_file(   key) {
    if (!g_current_file_started)
       return
    g_commit_record()
-   if (!g_skipfile && g_seen_log && g_current_name != "" && g_current_method != "" && !g_current_committed)
+   if (!g_skipfile && g_seen_log && g_current_name != "" && g_current_method != "" && !g_current_committed) {
+      g_add_problem(g_current_name, g_current_prob, g_current_m, g_current_eps)
+      key = g_current_name SUBSEP g_current_method
+      if (!(key in g_probfile))
+         g_badfile[key] = 1
       ++g_incomplete_files
+   }
    g_current_file_started = 0
 }
 
@@ -618,6 +627,13 @@ FNR == 1 {
       g_seen_log = 1
       g_tmpobjective = $2 + 0
       g_tmpobjective_seen = 1
+   }
+}
+
+/^RelativeGap:[[:space:]]*/ {
+   if (!g_skipfile) {
+      g_seen_log = 1
+      g_tmpgap = $2 + 0
    }
 }
 
@@ -1640,6 +1656,37 @@ function collect_detail_rows(probfilter, method_string, family,   n, i, j, prob,
    return detailrows
 }
 
+function g_detail_key_available(key) {
+   if (key in g_probfile)
+      return g_probfile[key] == 1
+   return (key in g_badfile)
+}
+
+function collect_detail_table6_rows(probfilter,   i, prob, family, gbase, gsdi, sopf) {
+   detailrows = 0
+   for (i = 1; i <= g_probnum; ++i) {
+      prob = g_problist[i]
+      family = g_probtype[prob]
+      if (family != probfilter)
+         continue
+      if (!table6_eps_allowed(family, g_epsvalue[prob]))
+         continue
+      if (family == "CCMPP" && !ccmpp_main_dimension(g_mvalue[prob]))
+         continue
+      if (!parse_detail_instance(prob))
+         continue
+
+      gbase = prob SUBSEP "BASE"
+      gsdi = prob SUBSEP "BASE+sDI"
+      sopf = prob SUBSEP "DB-OPF@14400-table6"
+      if (!g_detail_key_available(gbase) || !g_detail_key_available(gsdi) || !detail_key_available(sopf))
+         continue
+
+      insert_detail_row(prob, detail_sort_key(prob))
+   }
+   return detailrows
+}
+
 function fmt_time_key(key, limit, g) {
    if (key in badfile)
       return "--"
@@ -1652,6 +1699,20 @@ function fmt_time_key(key, limit, g) {
       return sprintf("(%.1f)", round_to(g, 1))
    }
    return sprintf("%.1f", round_to(timev[key], 1))
+}
+
+function g_fmt_time_key(key, limit, g) {
+   if (key in g_badfile || !(key in g_probfile))
+      return "--"
+   if (g_status[key] != "ok" || g_timev[key] >= limit) {
+      if (!(key in g_gaps))
+         return "--"
+      g = g_gaps[key]
+      if (g < 0.1)
+         return "($<$0.1)"
+      return sprintf("(%.1f)", round_to(g, 1))
+   }
+   return sprintf("%.1f", round_to(g_timev[key], 1))
 }
 
 function fmt_small0(v) {
@@ -1697,6 +1758,15 @@ function detail_time_node(prob, method, limit, key) {
       return
    }
    printf(" & %s & %d", fmt_time_key(key, limit), nodes[key])
+}
+
+function g_detail_time_node(prob, method, limit, key) {
+   key = prob SUBSEP method
+   if (key in g_badfile || !(key in g_probfile)) {
+      printf(" & -- & --")
+      return
+   }
+   printf(" & %s & %d", g_fmt_time_key(key, limit), g_nodes[key])
 }
 
 function detail_pt_f(prob, method, limit, dash_on_timeout, key) {
@@ -1794,6 +1864,8 @@ function detail_caption(kind, probfilter, p) {
       return "Detailed computational results of settings \\texttt{BASE+DB+OPF} and \\texttt{BASE+DB+EOPF} on the instances in testset " p ". ``--\" under column \\texttt{PT} denotes that the instance was not solved within 24 hours."
    if (kind == "four")
       return "Detailed computational results of settings \\texttt{BASE}, \\texttt{BASE+DI}, and \\texttt{BASE+DB+OPF} on the instances in testset " p "."
+   if (kind == "six")
+      return "Detailed computational results of settings \\tblGBASE, \\tblGSDI, and \\tblPBS on the instances in testset " p "."
    return "Detailed computational results of settings \\texttt{BASE}, \\texttt{BASE+sDI}, \\texttt{BASE+DB}, and \\texttt{BASE+DB+OPF} on the instances in testset \\texttt{CCMPP}."
 }
 
@@ -1977,6 +2049,30 @@ function print_detail_testm(   r, prob, key) {
    detail_common_end()
 }
 
+function detail_six_begin(probfilter, s) {
+   s = prob_suffix(probfilter)
+   detail_common_begin("cccc@{\\,}rrrrrr", detail_caption("six", probfilter), "tablesix:detail-" s, "six", probfilter, 10)
+   print "\t\t\\multirow{2}{*}{" detail_first_header(probfilter) "} & \\multirow{2}{*}{$n$} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{" detail_num_label() "} &"
+   print "\t\t\\multicolumn{2}{c}{\\tblGBASE} & \\multicolumn{2}{c}{\\tblGSDI} & \\multicolumn{2}{c}{\\tblPBS} \\\\"
+   print "\t\t\\cmidrule(r){5-6} \\cmidrule(r){7-8} \\cmidrule(r){9-10} & & & & " detail_tg_label() " & \\texttt{N} & " detail_tg_label() " & \\texttt{N} & " detail_tg_label() " & \\texttt{N} \\\\"
+   detail_common_head_end(10)
+}
+
+function print_detail_six(probfilter,   r, prob) {
+   collect_detail_table6_rows(probfilter)
+   detail_six_begin(probfilter)
+   detail_printed = 0
+   for (r = 1; r <= detailrows; ++r) {
+      prob = detailrow[r]
+      detail_row_start(prob, 10)
+      g_detail_time_node(prob, "BASE", gurobi_timelimit)
+      g_detail_time_node(prob, "BASE+sDI", gurobi_timelimit)
+      detail_time_node(prob, "DB-OPF@14400-table6", timelimit)
+      print " \\\\"
+   }
+   detail_common_end()
+}
+
 function print_detail_tables() {
    print "% 5.1"
    print_detail_four("CCRP")
@@ -2008,6 +2104,13 @@ function print_detail_tables() {
    print ""
    print "% 5.4"
    print_detail_testm()
+   print ""
+   print "% Table 6"
+   print_detail_six("CCRP")
+   print ""
+   print_detail_six("CCMPP")
+   print ""
+   print_detail_six("CCLS")
 }
 
 END {
