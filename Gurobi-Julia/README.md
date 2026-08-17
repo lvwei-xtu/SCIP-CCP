@@ -9,7 +9,7 @@ This directory contains the Julia implementation used to compare the proposed ap
 In particular, we compare the following two settings:
 
 - `G-BASE`: solves formulation (MILP) using the B&C algorithm of Gurobi with the mixing cuts Luedtke et al. (2010).
-- `G-BASE+sDI`: `G-BASE` with the proposed dominance inequalities in (30).
+- `G-BASE+sDI`: `G-BASE` with the enhanced version of dominance inequalities in (30).
   
 ### 📦 Dependencies & Installation
 
