@@ -25,6 +25,7 @@ To generate the commands for running the SCIP experiments, run the following fro
 bash scripts/gen_commands.sh [PROBLEMS=<P>] [METHODS=<S>] [MODE=<M>] <output-file>
 ```
 where `<P>` is chosen from `{CCRP, CCMPP, CCLS}`, `<S>` is chosen from `{BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF, BASE+DB+EOPF}`, `<M>` is chosen from `{standard, exact}`, and `<output-file>` denotes the file to which the generated commands are written. 
+Here, `standard` generates commands for running `BASE`, `BASE+DI`, `BASE+sDI`, `BASE+DB`, and `BASE+DB+OPF` with a time limit of 14400 seconds, and `exact` mode generates commands for running `BASE+DB+OPF`  and `BASE+DB+EOPF` under a time limit of 86400 seconds.
 
 Examples:
 
