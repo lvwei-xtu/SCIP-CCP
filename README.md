@@ -99,6 +99,15 @@ For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` w
 ./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB+EOPF05.set
 ```
 
+### ⚙️ Generating experiment commands
+
+To generate the commands for running the SCIP experiments, please run:
+
+```bash
+bash scripts/gen_commands.sh [PROBLEMS=<P>] [METHODS=<S>] [MODE=<M>] <output-file>
+```
+where `<P>` is chosen from `{CCRP, CCMPP, CCLS}`, `<S>` is chosen from `{BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF, BASE+DB+EOPF}`, `<M>` is chosen from `{standard, exact}`, and `<output-file>` denotes the file to which the generated commands are written. Here, `standard` generates commands for running `BASE`, `BASE+DI`, `BASE+sDI`, `BASE+DB`, and `BASE+DB+OPF` with a time limit of 14400 seconds. The `exact` mode generates commands for comparing the proposed approximation approach (`BASE+DB+OPF`) with the exact approach (`BASE+DB+EOPF`) under a time limit of 86400 seconds.
+
 ### 🔁 Replicating
 To reproduce the computational results presented in the paper and the Online Supplement, please run
 
