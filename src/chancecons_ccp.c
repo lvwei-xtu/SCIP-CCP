@@ -1255,6 +1255,7 @@ SCIP_RETCODE varFixtoZero(
 
 static
 int SloveSubMIPExactFixing(
+   SCIP*          mainscip,            /**< pointer to main SCIP */
    int            dimension,           /**< pointer to store the dimension of random vector on exit */
    int            nScenario,
    SCIP_Real**    rhsData,             /**< pointer to store the random right-hand side matrix on exit */
@@ -1276,7 +1277,11 @@ int SloveSubMIPExactFixing(
    SCIP_CONS* 		cons;
    SCIP_Bool      flag;
    SCIP_STATUS    solutionstatus;
+   SCIP_Real      remainingtime;
    (*optValSubProb) = -1.0;
+
+   if( SCIPisStopped(mainscip) )
+      return SCIP_OKAY;
 
    /* Setting up the SCIP environment */
    SCIP* scip = NULL;
@@ -1284,8 +1289,11 @@ int SloveSubMIPExactFixing(
    SCIP_CALL( SCIPcreate(&scip) );
    /* include default plugins */
    SCIP_CALL( SCIPincludeDefaultPlugins(scip) );
-   /* set time limit */
-   SCIP_CALL( SCIPsetRealParam(scip, "limits/time", 86400.0) );
+   /* use the remaining time of the main problem */
+   SCIP_CALL( SCIPgetRealParam(mainscip, "limits/time", &remainingtime) );
+   remainingtime = MAX(0.0, remainingtime - SCIPgetSolvingTime(mainscip));
+   SCIP_CALL( SCIPsetRealParam(scip, "limits/time", remainingtime) );
+
    /* turns off the SCIP output */
    SCIP_CALL( SCIPsetIntParam(scip, "display/verblevel", 0) );
 
@@ -1343,7 +1351,7 @@ int SloveSubMIPExactFixing(
       SCIP_CALL( SCIPfree(&scip) );
       BMScheckEmptyMemory();
 
-      return 1;
+      return SCIP_OKAY;
    }
 
    /* creating the SCIP Problem */
@@ -1507,25 +1515,26 @@ int SloveSubMIPExactFixing(
 
    SCIP_CALL( SCIPsolve(scip) );
    solutionstatus = SCIPgetStatus(scip);
+
    if( solutionstatus == SCIP_STATUS_OPTIMAL )
    {
       (*optValSubProb) = SCIPgetPrimalbound(scip);
    }
    else if( solutionstatus == SCIP_STATUS_INFEASIBLE )
    {
-      SCIPinfoMessage(scip, NULL, "This problem is INFEASIBLE !!!");
+      (*optValSubProb) = SCIPinfinity(scip);
    }
    else
    {
-      SCIPinfoMessage(scip, NULL, "Something went wrong during the optimization !!!");
-      assert(0);
+      /* No valid result is available, e.g., the time limit was reached. */
+      (*optValSubProb) = -1.0;
    }
 
    /* freeing scip */
    SCIP_CALL( SCIPfree(&scip) );
    BMScheckEmptyMemory();
 
-   return 1;
+   return SCIP_OKAY;
 }
 
 
@@ -1684,9 +1693,10 @@ SCIP_RETCODE overlapNodePruneVarFix(
       for( int i = 0; i < Queueone.size; i++ )
          residuals -= consdata->proba[basicVarzInd[Queueone.base[i]]];
       
-      SloveSubMIPExactFixing(consdata->dimension, basicNScenario, consdata->randomRhs, consdata->proba, consdata->basicVarzInd,
+      SloveSubMIPExactFixing(scip, consdata->dimension, basicNScenario, consdata->randomRhs, consdata->proba, consdata->basicVarzInd,
                               Queueone, Queuezero, Queuefree, consdata->nodeLb, &optValSubProb);
-      assert( !SCIPisEQ(scip, optValSubProb, -1) );
+      if( optValSubProb < 0.0 )
+         goto END_EXACT;
    
       if( SCIPisGT(scip, optValSubProb, residuals) )
       {
@@ -1715,9 +1725,10 @@ SCIP_RETCODE overlapNodePruneVarFix(
                EnQueue(scip, &QueuezeroExact, basicNScenario, Queuezero.base[j]);
             EnQueue(scip, &QueuezeroExact, basicNScenario, s);
             
-            SloveSubMIPExactFixing(consdata->dimension, basicNScenario, consdata->randomRhs, consdata->proba, consdata->basicVarzInd,
+            SloveSubMIPExactFixing(scip, consdata->dimension, basicNScenario, consdata->randomRhs, consdata->proba, consdata->basicVarzInd,
                                  Queueone, QueuezeroExact, QueuefreeExact, consdata->nodeLb, &optValSubProb);
-            assert( !SCIPisEQ(scip, optValSubProb, -1) );
+            if( optValSubProb < 0.0 )
+               goto END_EXACT;
 
             if( SCIPisGT(scip, optValSubProb, residuals) )
             {
@@ -1749,9 +1760,10 @@ SCIP_RETCODE overlapNodePruneVarFix(
                               
                residualsExact = residuals - consdata->proba[basicVarzInd[s]];
 
-               SloveSubMIPExactFixing(consdata->dimension, basicNScenario, consdata->randomRhs, consdata->proba, consdata->basicVarzInd,
+               SloveSubMIPExactFixing(scip, consdata->dimension, basicNScenario, consdata->randomRhs, consdata->proba, consdata->basicVarzInd,
                                     QueueoneExact, Queuezero, QueuefreeExact, consdata->nodeLb, &optValSubProb);
-               assert( !SCIPisEQ(scip, optValSubProb, -1) );
+               if( optValSubProb < 0.0 )
+                  goto END_EXACT;
 
                if( SCIPisGT(scip, optValSubProb, residualsExact) )
                {
@@ -1777,7 +1789,8 @@ SCIP_RETCODE overlapNodePruneVarFix(
             }
          }
       }
-      consdata->exactTime += (clock()-exactTimeStart)/(SCIP_Real)CLOCKS_PER_SEC;
+      END_EXACT:
+         consdata->exactTime += (clock() - exactTimeStart) / (SCIP_Real)CLOCKS_PER_SEC;
    }
    
    /* free temporary memory */
