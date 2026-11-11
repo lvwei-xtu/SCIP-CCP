@@ -304,7 +304,9 @@ function commit_record(   key, scendenom, st) {
 function commit_incomplete_record(   key) {
    if (skipfile || current_name == "" || current_method == "")
       return
-
+   if (!g_seen_log)
+      print "Incomplete SCIP run:", current_prob, current_instance, "epsilon=" current_eps, "method=" current_method > "/dev/stderr"
+   
    add_problem(current_name, current_prob, current_m)
    key = current_name SUBSEP current_method
    if (!(key in probfile))
