@@ -99,7 +99,7 @@ For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` w
 ./build/ccp -f data/CCMPPData/10-1000-0.ccmpp -s settings/CCMPPSetting/BASE+DB+EOPF05.set
 ```
 
-### ⚙️ Generating experiment commands
+### ⚙️ Generating commands and running experiments
 
 To generate the commands for running the computational experiments in a given table, please run:
 
