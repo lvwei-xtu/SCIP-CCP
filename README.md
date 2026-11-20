@@ -101,12 +101,19 @@ For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` w
 
 ### ⚙️ Generating experiment commands
 
-To generate the commands for running the SCIP experiments, please run:
+To generate the commands for running the computational experiments in a given table, please run:
 
 ```bash
-bash scripts/gen_commands.sh PROBLEMS=<P> METHODS=<S> MODE=<M> <output-file>
+bash scripts/gen_commands.sh TABLE=<T> <output-file>
 ```
-where `<P>` is chosen from `{CCRP, CCMPP, CCLS}`, `<S>` is chosen from `{BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF, BASE+DB+EOPF}`, `<M>` is chosen from `{standard, exact}`, and `<output-file>` denotes the file to which the generated commands are written. Here, `standard` generates commands for running `BASE`, `BASE+DI`, `BASE+sDI`, `BASE+DB`, and `BASE+DB+OPF` with a time limit of `14400` seconds, and `exact` generates commands for running `BASE+DB+OPF` and `BASE+DB+EOPF` with a time limit of `86400` seconds.
+where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `<output-file>` denotes the file to which the generated commands are written. 
+For example:
+
+```bash
+# Generate the commands for Table 1.
+bash scripts/gen_commands.sh TABLE=1 scripts/table1.sh
+```
+Run `bash scripts/table1.sh` from the repository root to execute the experiments sequentially, or pass the commands to a cluster submission script.
 
 ### 🔁 Replicating
 To reproduce the computational results presented in the paper and the Online Supplement, please run

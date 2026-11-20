@@ -1,378 +1,175 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
 export LC_ALL=C
-export LANG=C
+
+# Run from the repository root. Generate one solver command per line for a table;
+# execute the commands separately, for example through a cluster submission script.
+usage() {
+  cat <<'HELP'
+To generate the commands for running the computational experiments in a given table, please run:
+
+bash scripts/gen_commands.sh TABLE=<T> <output-file>
+
+where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `<output-file>` denotes the file to which the generated commands are written. 
+The methods, instances, and time limit are selected according to the table:
+
+| Table | Methods | Instances | Time limit (seconds) |
+| --- | --- | --- | --- |
+| 1 | `BASE`, `BASE+DI`, `BASE+DB+OPF` | CCRP, CCMPP, CCLS | 14400 |
+| 2 | `BASE+DB`, `BASE+sDI`, `BASE+DI` | CCRP, CCMPP, CCLS | 14400 |
+| 3 | `BASE+DB`, `BASE+DB+OPF` | CCRP, CCMPP, CCLS | 14400 |
+| 4 | `BASE+DB+OPF`, `BASE+DB+EOPF` | CCRP, CCMPP, CCLS | 86400 |
+| 5 | `BASE`, `BASE+sDI`, `BASE+DB`, `BASE+DB+OPF` | CCMPP with dimensions 10, 20, 30, 50, 100, 150 | 14400 |
+| 6 | `G-BASE`, `G-BASE+sDI`, `BASE+DB+OPF` | CCRP, CCMPP, CCLS | 14400 |
+
+For Tables 1–4 and 6, the CCMPP dimensions are 10, 20, and 30. Table 6 includes the Julia/Gurobi commands and the SCIP reruns; all three methods should be run on the same hardware. 
+The Julia/Gurobi installation instructions are given in [Gurobi-Julia/README.md](Gurobi-Julia/README.md).
+
+For example:
+
+# Generate the commands for Table 1.
+bash scripts/gen_commands.sh TABLE=1 scripts/table1.sh
+
+HELP
+}
+
+die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
+
+TABLE_NUMBER=""
+COMMAND_FILE=""
+for arg in "$@"; do
+  case "$arg" in
+    -h|--help) usage; exit 0 ;;
+    TABLE=*)
+      [[ -z "$TABLE_NUMBER" ]] || die 'specify TABLE only once'
+      TABLE_NUMBER="${arg#TABLE=}"
+      [[ -n "$TABLE_NUMBER" ]] || die 'TABLE requires a value'
+      ;;
+    *=*|-*) die "unsupported argument: $arg; use --help for usage" ;;
+    *)
+      [[ -z "$COMMAND_FILE" ]] || die 'specify only one output file'
+      COMMAND_FILE="$arg"
+      ;;
+  esac
+done
+[[ -n "$COMMAND_FILE" ]] || die 'specify an output file; use --help for usage'
+
+# Match the comparisons and instance subsets used by scripts/CCP.awk.
+PROBLEM_LIST=(CCRP CCMPP CCLS)
+TIME_LIMIT=14400
+case "$TABLE_NUMBER" in
+  1) METHOD_LIST=(BASE BASE+DI BASE+DB+OPF) ;;
+  2) METHOD_LIST=(BASE+DB BASE+sDI BASE+DI) ;;
+  3) METHOD_LIST=(BASE+DB BASE+DB+OPF) ;;
+  4) METHOD_LIST=(BASE+DB+OPF BASE+DB+EOPF); TIME_LIMIT=86400 ;;
+  5) METHOD_LIST=(BASE BASE+sDI BASE+DB BASE+DB+OPF); PROBLEM_LIST=(CCMPP) ;;
+  6) METHOD_LIST=(G-BASE G-BASE+sDI BASE+DB+OPF) ;;
+  *) die 'TABLE must be one of 1, 2, 3, 4, 5, 6' ;;
+esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="${ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
-RESULT_NAME="${RESULT_NAME:-results-scip}"
-RESULT_ROOT="${RESULT_ROOT:-$ROOT/$RESULT_NAME}"
-COMMAND_FILE="$SCRIPT_DIR/${RESULT_NAME}.commands.sh"
-EXE="${EXE:-}"
-PROBLEMS_SELECTED="${PROBLEMS:-}"
-METHODS_SELECTED="${METHODS:-}"
-MODE="${MODE:-standard}"
-OPF_LIMIT="${OPF_LIMIT:-}"
+ROOT="$(cd "$ROOT" && pwd)"
+EXE="${EXE:-$ROOT/build/ccp}"
+JULIA="${JULIA:-julia}"
+SETTINGS_REL="settings/generated/table-$TABLE_NUMBER"
 
-usage() {
-  cat <<'EOF'
-Generating experiment commands
-
-To generate the commands for running the SCIP experiments, run the following from the repository root:
-
-```bash
-bash scripts/gen_commands.sh [PROBLEMS=<P>] [METHODS=<S>] [MODE=<M>] <output-file>
-```
-where `<P>` is chosen from `{CCRP, CCMPP, CCLS}`, `<S>` is chosen from `{BASE, BASE+DI, BASE+sDI, BASE+DB, BASE+DB+OPF, BASE+DB+EOPF}`, `<M>` is chosen from `{standard, exact}`, and `<output-file>` denotes the file to which the generated commands are written. 
-Here, `standard` generates commands for running `BASE`, `BASE+DI`, `BASE+sDI`, `BASE+DB`, and `BASE+DB+OPF` with a time limit of 14400 seconds, and `exact` generates commands for running `BASE+DB+OPF` and `BASE+DB+EOPF` with a time limit of 86400 seconds.
-
-Examples:
-
-```bash
-# Generate commands for CCMPP under BASE.
-bash scripts/gen_commands.sh PROBLEMS=CCMPP METHODS=BASE MODE=standard scripts/CCMPP-BASE.sh
-
-# Generate commands for multiple problem types and methods.
-bash scripts/gen_commands.sh PROBLEMS=CCRP,CCLS METHODS=BASE,BASE+DI scripts/CCRP-CCLS.sh
-
-# Compare the approximation and exact approaches on CCMPP.
-bash scripts/gen_commands.sh PROBLEMS=CCMPP METHODS=BASE+DB+OPF,BASE+DB+EOPF MODE=exact scripts/CCMPP-EXACT.sh
-```
-EOF
-}
-
-OUTPUT_SPECIFIED=0
-for arg in "$@"; do
-  case "$arg" in
-    -h|--help)
-      usage
-      exit 0
-      ;;
-    PROBLEMS=|METHODS=|MODE=)
-      printf 'ERROR: missing value in argument %s\n' "$arg" >&2
-      exit 1
-      ;;
-    PROBLEMS=*) PROBLEMS_SELECTED="${arg#PROBLEMS=}" ;;
-    METHODS=*) METHODS_SELECTED="${arg#METHODS=}" ;;
-    MODE=*) MODE="${arg#MODE=}" ;;
-    *=*|-*)
-      printf 'ERROR: unsupported argument %s; use --help for usage\n' "$arg" >&2
-      exit 1
-      ;;
-    *)
-      if [[ "$OUTPUT_SPECIFIED" -eq 1 ]]; then
-        printf 'ERROR: specify only one output file\n' >&2
-        exit 1
-      fi
-      COMMAND_FILE="$arg"
-      OUTPUT_SPECIFIED=1
-      ;;
-  esac
-done
-
-if [[ -z "$EXE" ]]; then
-  EXE="$ROOT/build/ccp"
+if [[ "$TABLE_NUMBER" == 6 ]]; then
+  [[ -f "$ROOT/Gurobi-Julia/solve.jl" && -f "$ROOT/Gurobi-Julia/Project.toml" ]] \
+    || die 'Table 6 requires Gurobi-Julia/solve.jl and Project.toml'
 fi
 
-COMMAND_EXE="$EXE"
+mkdir -p "$(dirname "$COMMAND_FILE")"
+TEMP_OUTPUT="$(mktemp "${COMMAND_FILE}.tmp.XXXXXX")"
+trap 'rm -f "$TEMP_OUTPUT"' EXIT
+{
+  printf '#!/usr/bin/env bash\n'
+  printf '# Table %s: run these commands from the repository root.\n' "$TABLE_NUMBER"
+  printf '# Each run has a time limit of %s seconds.\n' "$TIME_LIMIT"
+} > "$TEMP_OUTPUT"
 
-case "$MODE" in
-  standard)
-    DEFAULT_METHODS=(BASE BASE+DI BASE+sDI BASE+DB BASE+DB+OPF)
-    OPF_LIMIT="${OPF_LIMIT:-14400}"
-    ;;
-  exact)
-    DEFAULT_METHODS=(BASE+DB+OPF BASE+DB+EOPF)
-    OPF_LIMIT="${OPF_LIMIT:-86400}"
-    ;;
-  *)
-    printf 'ERROR: unsupported MODE=%s\n' "$MODE" >&2
-    usage >&2
-    exit 1
-    ;;
-esac
-
-ALL_PROBLEMS=(CCRP CCMPP CCLS)
-
-if [[ -n "$METHODS_SELECTED" ]]; then
-  IFS=',' read -r -a METHOD_LIST <<< "$METHODS_SELECTED"
-else
-  METHOD_LIST=("${DEFAULT_METHODS[@]}")
-fi
-
-EXACT_SPLIT=0
-if [[ "$MODE" == "exact" && -z "$METHODS_SELECTED" ]]; then
-  EXACT_SPLIT=1
-fi
-
-COMMAND_DIR="$(dirname "$COMMAND_FILE")"
-COMMAND_FILES=()
-
-add_command_file_once() {
-  local file="$1"
-  local existing
-  for existing in "${COMMAND_FILES[@]:-}"; do
-    [[ "$existing" == "$file" ]] && return 0
-  done
-  mkdir -p "$(dirname "$file")"
-  : > "$file"
-  COMMAND_FILES+=("$file")
+# Keep the original settings intact and isolate the limits for different tables.
+prepare_settings() {
+  local source="$1" target="$2"
+  [[ -f "$source" ]] || die "missing setting: $source"
+  mkdir -p "$(dirname "$target")"
+  awk -v limit="$TIME_LIMIT" '
+    /^[[:space:]]*limits\/time[[:space:]]*=/ {
+      print "limits/time = " limit; found = 1; next
+    }
+    { print }
+    END { if (!found) print "limits/time = " limit }
+  ' "$source" > "$target"
 }
 
-exact_command_file() {
-  local prob="$1"
-  local method="$2"
-  case "$method" in
-    BASE+DB+OPF) printf '%s/%s-BASE+DB+OPF-%s.sh' "$COMMAND_DIR" "$prob" "$OPF_LIMIT" ;;
-    BASE+DB+EOPF) printf '%s/%s-BASE+DB+EOPF.sh' "$COMMAND_DIR" "$prob" ;;
-    *) printf '%s' "$COMMAND_FILE" ;;
-  esac
-}
-
-command_file_for() {
-  local prob="$1"
-  local method="$2"
-  if [[ "$EXACT_SPLIT" -eq 1 ]]; then
-    exact_command_file "$prob" "$method"
-  else
-    printf '%s' "$COMMAND_FILE"
-  fi
-}
-
-method_in_list() {
-  local want="$1"
-  local method
-  for method in "${METHOD_LIST[@]}"; do
-    [[ "$method" == "$want" ]] && return 0
-  done
-  return 1
-}
-
-csv_contains() {
-  local csv="$1"
-  local item="$2"
-  local token
-  [[ -z "$csv" ]] && return 0
-  IFS=',' read -r -a tokens <<< "$csv"
-  for token in "${tokens[@]}"; do
-    [[ "$token" == "$item" ]] && return 0
-  done
-  return 1
-}
-
-problem_data_dir() {
-  case "$1" in
-    CCRP) printf 'CCRPData' ;;
-    CCMPP) printf 'CCMPPData' ;;
-    CCLS) printf 'CCLSData' ;;
-    *) return 1 ;;
-  esac
-}
-
-problem_setting_dir() {
-  case "$1" in
-    CCRP) printf 'CCRPSetting' ;;
-    CCMPP) printf 'CCMPPSetting' ;;
-    CCLS) printf 'CCLSSetting' ;;
-    *) return 1 ;;
-  esac
-}
-
-problem_extension() {
-  case "$1" in
-    CCRP) printf 'ccrp' ;;
-    CCMPP) printf 'ccmpp' ;;
-    CCLS) printf 'ccls' ;;
-    *) return 1 ;;
-  esac
-}
-
-problem_suffixes() {
-  case "$1" in
-    CCRP) printf '15 1 2' ;;
-    CCMPP|CCLS) printf '05 1 2' ;;
-    *) return 1 ;;
-  esac
-}
-
-suffix_to_eps() {
-  case "$1" in
-    05) printf '0.05' ;;
-    15) printf '0.15' ;;
-    1) printf '0.1' ;;
-    2) printf '0.2' ;;
-    *) return 1 ;;
-  esac
-}
-
-method_setting_prefix() {
-  case "$1" in
-    BASE) printf 'BASE' ;;
-    BASE+DI) printf 'BASE+DI' ;;
-    BASE+sDI) printf 'BASE+sDI' ;;
-    BASE+DB) printf 'BASE+DB' ;;
-    BASE+DB+OPF) printf 'BASE+DB+OPF' ;;
-    BASE+DB+EOPF) printf 'BASE+DB+EOPF' ;;
-    *) return 1 ;;
-  esac
-}
-
-method_result_dir() {
-  local prob="$1"
-  local method="$2"
-  if [[ "$method" == "BASE+DB+OPF" ]]; then
-    printf '%s/%s/%s/%s' "$RESULT_ROOT" "$prob" "$method" "$OPF_LIMIT"
-  else
-    printf '%s/%s/%s' "$RESULT_ROOT" "$prob" "$method"
-  fi
-}
-
-skip_instance_for_mode() {
-  local prob="$1"
-  local data_base="$2"
-  local m="${data_base%%-*}"
-
-  if [[ "$MODE" == "exact" && "$prob" == "CCMPP" ]]; then
-    case "$m" in
-      50|100|150) return 0 ;;
-    esac
-  fi
-
-  return 1
-}
-
-shell_quote() {
-  printf '%q' "$1"
-}
-
-update_exact_opf_settings() {
-  local prob="$1"
-  local setting_dir="$ROOT/settings/$(problem_setting_dir "$prob")"
-  local suffix file tmp updated=0 missing=0
-
-  if [[ ! -d "$setting_dir" ]]; then
-    printf 'WARN missing %s setting directory for exact mode: %s\n' "$prob" "$setting_dir" >&2
-    return 0
-  fi
-
-  for suffix in $(problem_suffixes "$prob"); do
-    file="$setting_dir/BASE+DB+OPF${suffix}.set"
-    if [[ ! -f "$file" ]]; then
-      printf 'WARN missing %s BASE+DB+OPF setting for exact mode: %s\n' "$prob" "$file" >&2
-      missing=$((missing + 1))
-      continue
-    fi
-
-    tmp="$(mktemp)"
-    sed 's/^limits\/time[[:space:]]*=.*/limits\/time = 86400/' "$file" > "$tmp"
-    if cmp -s "$tmp" "$file"; then
-      rm -f "$tmp"
-    else
-      mv "$tmp" "$file"
-      updated=$((updated + 1))
-    fi
-  done
-
-  printf 'INFO %s BASE+DB+OPF exact settings updated: %d\n' "$prob" "$updated"
-  if [[ "$missing" -gt 0 ]]; then
-    printf 'WARN %s BASE+DB+OPF exact settings missing: %d\n' "$prob" "$missing" >&2
-  fi
-}
-
-mkdir -p "$SCRIPT_DIR" "$RESULT_ROOT" "$COMMAND_DIR"
-
-if [[ "$EXACT_SPLIT" -eq 0 ]]; then
-  add_command_file_once "$COMMAND_FILE"
-fi
-
-if [[ "$MODE" == "exact" ]] && method_in_list BASE+DB+OPF; then
-  for prob in "${ALL_PROBLEMS[@]}"; do
-    csv_contains "$PROBLEMS_SELECTED" "$prob" || continue
-    update_exact_opf_settings "$prob"
-  done
-fi
-
+shopt -s nullglob
 generated=0
-missing=0
+for prob in "${PROBLEM_LIST[@]}"; do
+  case "$prob" in
+    CCRP) ext=ccrp; SUFFIXES=(1 15 2) ;;
+    CCMPP) ext=ccmpp; SUFFIXES=(05 1 2) ;;
+    CCLS) ext=ccls; SUFFIXES=(05 1 2) ;;
+  esac
+  [[ -d "$ROOT/data/${prob}Data" ]] || die "missing data directory for $prob"
+  DATA_FILES=("$ROOT/data/${prob}Data/"*."$ext")
+  [[ ${#DATA_FILES[@]} -gt 0 ]] || die "no .$ext instances found"
 
-for prob in "${ALL_PROBLEMS[@]}"; do
-  csv_contains "$PROBLEMS_SELECTED" "$prob" || continue
-
-  data_dir="$ROOT/data/$(problem_data_dir "$prob")"
-  setting_dir="$ROOT/settings/$(problem_setting_dir "$prob")"
-  data_dir_rel="data/$(problem_data_dir "$prob")"
-  setting_dir_rel="settings/$(problem_setting_dir "$prob")"
-  ext="$(problem_extension "$prob")"
-
-  if [[ ! -d "$data_dir" ]]; then
-    printf 'WARN missing data directory: %s\n' "$data_dir" >&2
-    missing=$((missing + 1))
-    continue
-  fi
-  if [[ ! -d "$setting_dir" ]]; then
-    printf 'WARN missing setting directory: %s\n' "$setting_dir" >&2
-    missing=$((missing + 1))
-    continue
-  fi
-
-  while IFS= read -r -d '' data_file; do
-    data_rel="${data_file#$ROOT/}"
-    data_base="$(basename "$data_file")"
-
-    if skip_instance_for_mode "$prob" "$data_base"; then
-      continue
-    fi
-
-    for method in "${METHOD_LIST[@]}"; do
-      method_prefix="$(method_setting_prefix "$method")"
-      result_method_dir="$(method_result_dir "$prob" "$method")"
-      target_command_file="$(command_file_for "$prob" "$method")"
-      add_command_file_once "$target_command_file"
-      mkdir -p "$result_method_dir"
-
-      for suffix in $(problem_suffixes "$prob"); do
-        eps="$(suffix_to_eps "$suffix")"
-        setting_file="$setting_dir/${method_prefix}${suffix}.set"
-        setting_rel="$setting_dir_rel/${method_prefix}${suffix}.set"
-
-        if [[ ! -f "$setting_file" ]]; then
-          printf 'WARN missing setting: %s\n' "$setting_file" >&2
-          missing=$((missing + 1))
-          continue
+  for method in "${METHOD_LIST[@]}"; do
+    solver=scip
+    setting="$method"
+    result_dir="$ROOT/results-scip/$prob/$method"
+    case "$method" in
+      G-*)
+        solver=gurobi
+        setting="${method#G-}"
+        result_dir="$ROOT/results-gurobi/$prob/$setting"
+        ;;
+      BASE+DB+OPF)
+        if [[ "$TABLE_NUMBER" == 6 ]]; then
+          result_dir="$result_dir/14400-table6"
+        else
+          result_dir="$result_dir/$TIME_LIMIT"
         fi
+        ;;
+    esac
+    mkdir -p "$result_dir"
 
-        out_file="$result_method_dir/${data_base}-${method}-${eps}.out"
-        err_file="$result_method_dir/${data_base}-${method}-${eps}.err"
+    for suffix in "${SUFFIXES[@]}"; do
+      case "$suffix" in
+        05) eps=0.05 ;; 1) eps=0.1 ;; 15) eps=0.15 ;; 2) eps=0.2 ;;
+      esac
+      if [[ "$solver" == scip ]]; then
+        setting_rel="$SETTINGS_REL/${prob}Setting/${setting}${suffix}.set"
+        prepare_settings "$ROOT/settings/${prob}Setting/${setting}${suffix}.set" "$ROOT/$setting_rel"
+      fi
 
-        printf '%s -f %s -s %s > %s 2> %s\n' \
-          "$(shell_quote "$COMMAND_EXE")" \
-          "$(shell_quote "$data_rel")" \
-          "$(shell_quote "$setting_rel")" \
-          "$(shell_quote "$out_file")" \
-          "$(shell_quote "$err_file")" >> "$target_command_file"
+      for data_file in "${DATA_FILES[@]}"; do
+        data_base="${data_file##*/}"
+        if [[ "$prob" == CCMPP ]]; then
+          # Tables 1--4 and 6 use m=10,20,30; Table 5 also uses m=50,100,150.
+          case "${data_base%%-*}" in
+            10|20|30) ;;
+            50|100|150) [[ "$TABLE_NUMBER" == 5 ]] || continue ;;
+            *) continue ;;
+          esac
+        fi
+        data_rel="data/${prob}Data/$data_base"
+        log_base="$result_dir/${data_base}-${setting}-${eps}"
+        if [[ "$solver" == scip ]]; then
+          COMMAND=("$EXE" -f "$data_rel" -s "$setting_rel")
+        else
+          COMMAND=("$JULIA" --project=Gurobi-Julia Gurobi-Julia/solve.jl
+            --instance "$data_rel" --setting "$setting" --epsilon "$eps"
+            --time-limit "$TIME_LIMIT" --threads 1 --mip-gap 0)
+        fi
+        printf '%q ' "${COMMAND[@]}" >> "$TEMP_OUTPUT"
+        printf '> %q 2> %q\n' "$log_base.out" "$log_base.err" >> "$TEMP_OUTPUT"
         generated=$((generated + 1))
       done
     done
-  done < <(find "$data_dir" -type f -name "*.${ext}" -print0 | sort -z)
-done
-
-for command_file in "${COMMAND_FILES[@]:-}"; do
-  chmod +x "$command_file"
-done
-
-if [[ "$EXACT_SPLIT" -eq 1 ]]; then
-  printf 'INFO generated %d commands into:\n' "$generated"
-  for command_file in "${COMMAND_FILES[@]:-}"; do
-    printf '  %s\n' "$command_file"
   done
-else
-  printf 'INFO generated %d commands into %s\n' "$generated" "$COMMAND_FILE"
-fi
-printf 'INFO result root: %s\n' "$RESULT_ROOT"
-printf 'INFO executable in commands: %s\n' "$COMMAND_EXE"
-
-if [[ "$missing" -gt 0 ]]; then
-  printf 'ERROR encountered %d missing inputs\n' "$missing" >&2
-  exit 2
-fi
+done
+[[ "$generated" -gt 0 ]] || die 'no commands generated'
+chmod +x "$TEMP_OUTPUT"
+mv "$TEMP_OUTPUT" "$COMMAND_FILE"
+printf 'Generated %d commands for Table %s in %s\n' "$generated" "$TABLE_NUMBER" "$COMMAND_FILE"
