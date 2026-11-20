@@ -110,10 +110,9 @@ where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, an
 For example:
 
 ```bash
-# Generate the commands for Table 1.
 bash scripts/gen_commands.sh TABLE=1 scripts/table1.sh
 ```
-Run `bash scripts/table1.sh` from the repository root to execute the experiments sequentially, or pass the commands to a cluster submission script.
+Run bash scripts/table1.sh from the repository root to execute the experiments sequentially, or pass the commands to a cluster submission script.
 
 ### 🔁 Replicating
 To reproduce the computational results presented in the paper and the Online Supplement, please run
