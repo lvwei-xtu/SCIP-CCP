@@ -112,7 +112,7 @@ For example:
 ```bash
 bash scripts/gen_commands.sh TABLE=1 scripts/table1.sh
 ```
-Run bash `scripts/table1.sh` from the repository root to execute the experiments sequentially, or pass the commands to a cluster submission script.
+The generated script can then be run from the repository root using `bash scripts/table1.sh` to execute the experiments sequentially, or submitted to a computing cluster for execution.
 
 ### 🔁 Replicating
 To reproduce the computational results presented in the paper and the Online Supplement, please run
