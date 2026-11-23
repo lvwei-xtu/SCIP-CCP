@@ -8,9 +8,9 @@ usage() {
   cat <<'HELP'
 To generate the commands for running the computational experiments in a given table, please run:
 
-bash scripts/gen_commands.sh TABLE=<T> <output-file>
+bash scripts/gen_commands.sh TABLE=<T> TABLE<T>.sh
 
-where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `<output-file>` denotes the file to which the generated commands are written. 
+where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `TABLE<T>.sh` denotes the shell script to which the generated commands are written. 
 The methods, instances, and time limit are selected according to the table:
 
 | Table | Methods | Instances | Time limit (seconds) |
@@ -28,7 +28,7 @@ The Julia/Gurobi installation instructions are given in [Gurobi-Julia/README.md]
 For example:
 
 # Generate the commands for Table 1.
-bash scripts/gen_commands.sh TABLE=1 scripts/table1.sh
+bash scripts/gen_commands.sh TABLE=1 TABLE1.sh
 
 HELP
 }
@@ -81,12 +81,6 @@ fi
 
 mkdir -p "$(dirname "$COMMAND_FILE")"
 TEMP_OUTPUT="$(mktemp "${COMMAND_FILE}.tmp.XXXXXX")"
-trap 'rm -f "$TEMP_OUTPUT"' EXIT
-{
-  printf '#!/usr/bin/env bash\n'
-  printf '# Table %s: run these commands from the repository root.\n' "$TABLE_NUMBER"
-  printf '# Each run has a time limit of %s seconds.\n' "$TIME_LIMIT"
-} > "$TEMP_OUTPUT"
 
 # Keep the original settings intact and isolate the limits for different tables.
 prepare_settings() {

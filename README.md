@@ -104,9 +104,9 @@ For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` w
 To generate the commands for running the computational experiments in a given table, please run:
 
 ```bash
-bash scripts/gen_commands.sh TABLE=<T> <output-file>
+bash scripts/gen_commands.sh TABLE=<T> TABLE<T>.sh
 ```
-where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `<output-file>` denotes the file to which the generated commands are written. The generated script can then be run using `bash <output-file>` to execute the experiments sequentially, or submitted to a computing cluster for execution.
+where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `TABLE<T>.sh` denotes the shell script to which the generated commands are written. The generated script can then be run using `bash TABLE<T>.sh` to execute the experiments sequentially, or submitted to a computing cluster for execution.
 
 ### 🔁 Replicating
 To reproduce the computational results presented in the paper and the Online Supplement, please run
