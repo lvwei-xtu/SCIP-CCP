@@ -106,7 +106,7 @@ To generate the commands for running the computational experiments in a given ta
 ```bash
 bash scripts/gen_commands.sh TABLE=<T> TABLE<T>.sh
 ```
-where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `TABLE<T>.sh` denotes the shell script to which the generated commands are written. The generated script can then be run using `bash TABLE<T>.sh` to execute the experiments sequentially.
+where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `TABLE<T>.sh` denotes the shell script to which the generated commands are written. The generated script can then be run using `bash TABLE<T>.sh` to execute the experiments of Table T.
 
 ### 🔁 Replicating
 To reproduce the computational results presented in the paper and the Online Supplement, please run
