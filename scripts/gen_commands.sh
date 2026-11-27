@@ -10,7 +10,7 @@ To generate the commands for running the computational experiments in a given ta
 
 bash scripts/gen_commands.sh TABLE=<T> TABLE<T>.sh
 
-where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `TABLE<T>.sh` denotes the shell script to which the generated commands are written. 
+where `<T>` is chosen from `{1, 2, 3, 4, 5, B1}` and denotes the table number, and `TABLE<T>.sh` denotes the shell script to which the generated commands are written.
 The methods, instances, and time limit are selected according to the table:
 
 | Table | Methods | Instances | Time limit (seconds) |
@@ -20,9 +20,9 @@ The methods, instances, and time limit are selected according to the table:
 | 3 | `BASE+DB`, `BASE+DB+OPF` | CCRP, CCMPP, CCLS | 14400 |
 | 4 | `BASE+DB+OPF`, `BASE+DB+EOPF` | CCRP, CCMPP, CCLS | 86400 |
 | 5 | `BASE`, `BASE+sDI`, `BASE+DB`, `BASE+DB+OPF` | CCMPP with dimensions 10, 20, 30, 50, 100, 150 | 14400 |
-| 6 | `G-BASE`, `G-BASE+sDI`, `BASE+DB+OPF` | CCRP, CCMPP, CCLS | 14400 |
+| B1 | `G-BASE`, `G-BASE+sDI`, `BASE+DB+OPF` | CCRP, CCMPP, CCLS | 14400 |
 
-For Tables 1–4 and 6, the CCMPP dimensions are 10, 20, and 30. Table 6 includes the Julia/Gurobi commands and the SCIP reruns; all three methods should be run on the same hardware. 
+For Tables 1–4 and B1, the CCMPP dimensions are 10, 20, and 30. Table B1 includes the Julia/Gurobi commands and the SCIP reruns; all three methods should be run on the same hardware.
 The Julia/Gurobi installation instructions are given in [Gurobi-Julia/README.md](Gurobi-Julia/README.md).
 
 For example:
@@ -63,8 +63,8 @@ case "$TABLE_NUMBER" in
   3) METHOD_LIST=(BASE+DB BASE+DB+OPF) ;;
   4) METHOD_LIST=(BASE+DB+OPF BASE+DB+EOPF); TIME_LIMIT=86400 ;;
   5) METHOD_LIST=(BASE BASE+sDI BASE+DB BASE+DB+OPF); PROBLEM_LIST=(CCMPP) ;;
-  6) METHOD_LIST=(G-BASE G-BASE+sDI BASE+DB+OPF) ;;
-  *) die 'TABLE must be one of 1, 2, 3, 4, 5, 6' ;;
+  B1) METHOD_LIST=(G-BASE G-BASE+sDI BASE+DB+OPF) ;;
+  *) die 'TABLE must be one of 1, 2, 3, 4, 5, B1' ;;
 esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -74,9 +74,9 @@ EXE="${EXE:-$ROOT/build/ccp}"
 JULIA="${JULIA:-julia}"
 SETTINGS_REL="settings/generated/table-$TABLE_NUMBER"
 
-if [[ "$TABLE_NUMBER" == 6 ]]; then
+if [[ "$TABLE_NUMBER" == B1 ]]; then
   [[ -f "$ROOT/Gurobi-Julia/solve.jl" && -f "$ROOT/Gurobi-Julia/Project.toml" ]] \
-    || die 'Table 6 requires Gurobi-Julia/solve.jl and Project.toml'
+    || die 'Table B1 requires Gurobi-Julia/solve.jl and Project.toml'
 fi
 
 mkdir -p "$(dirname "$COMMAND_FILE")"
@@ -119,8 +119,8 @@ for prob in "${PROBLEM_LIST[@]}"; do
         result_dir="$ROOT/results-gurobi/$prob/$setting"
         ;;
       BASE+DB+OPF)
-        if [[ "$TABLE_NUMBER" == 6 ]]; then
-          result_dir="$result_dir/14400-table6"
+        if [[ "$TABLE_NUMBER" == B1 ]]; then
+          result_dir="$result_dir/14400-tableB1"
         else
           result_dir="$result_dir/$TIME_LIMIT"
         fi
@@ -140,7 +140,7 @@ for prob in "${PROBLEM_LIST[@]}"; do
       for data_file in "${DATA_FILES[@]}"; do
         data_base="${data_file##*/}"
         if [[ "$prob" == CCMPP ]]; then
-          # Tables 1--4 and 6 use m=10,20,30; Table 5 also uses m=50,100,150.
+          # Tables 1--4 and B1 use m=10,20,30; Table 5 also uses m=50,100,150.
           case "${data_base%%-*}" in
             10|20|30) ;;
             50|100|150) [[ "$TABLE_NUMBER" == 5 ]] || continue ;;

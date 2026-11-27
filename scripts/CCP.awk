@@ -14,8 +14,8 @@ BEGIN {
    else if (table == "detail")
       table = "d-all"
 
-   if (table !~ /^(1|2|3|4|5|6|s-all|d-all)$/) {
-      printf "ERROR: unsupported table '%s'; use 1, 2, 3, 4, 5, 6, s-all, or d-all\n", table > "/dev/stderr"
+   if (table !~ /^(1|2|3|4|5|B1|s-all|d-all)$/) {
+      printf "ERROR: unsupported table '%s'; use 1, 2, 3, 4, 5, B1, s-all, or d-all\n", table > "/dev/stderr"
       fatal = 1
       exit 2
    }
@@ -32,7 +32,7 @@ BEGIN {
       add_files_from_dir(root)
 
    if (ARGC <= 1 && root == "" && ResultSCIP == "" && ResultGurobi == "") {
-      print "usage: awk -f scripts/CCP.awk [-v ResultSCIP=results-scip] [-v ResultGurobi=results-gurobi] [-v table=1|2|3|4|5|6|s-all|d-all]" > "/dev/stderr"
+      print "usage: awk -f scripts/CCP.awk [-v ResultSCIP=results-scip] [-v ResultGurobi=results-gurobi] [-v table=1|2|3|4|5|B1|s-all|d-all]" > "/dev/stderr"
       fatal = 1
       exit 2
    }
@@ -188,8 +188,9 @@ function parse_result_path(path, bn, stem, p, rest, d, prob_lc, suffix) {
    suffix = suffix_from_lc(prob_lc)
    current_m = first_token(current_instance)
 
-   if (path ~ /\/(DB-OPF|BASE\+DB\+OPF)\/14400-table6\//)
-      current_limit = "14400-table6"
+   # Accept the original Table 6 directory and the renamed Table B1 directory.
+   if (path ~ /\/(DB-OPF|BASE\+DB\+OPF)\/14400-table(6|B1)\//)
+      current_limit = "14400-tableB1"
    else if (path ~ /\/(DB-OPF|BASE\+DB\+OPF)\/86400\//)
       current_limit = "86400"
    else if (path ~ /\/(DB-OPF|BASE\+DB\+OPF)\/14400\//)
@@ -962,7 +963,7 @@ function table2_begin() {
    print "\t\\small"
    print "\t\\centering"
    print "\t\\addtolength{\\tabcolsep}{-3pt}"
-   print "\t\\caption{Performance comparison of settings \\texttt{BASE+DB}, \\texttt{BASE+sDI}, and \\texttt{BASE+DI}.}"
+   print "\t\\caption{Performance comparison of \\texttt{BASE+DB}, \\texttt{BASE+sDI}, and \\texttt{BASE+DI}.}"
    print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}lrrrrrrrrrrrrrr@{\\extracolsep\\fill}}"
    print "\t\t\\toprule"
    print "\t\t\\multirow{2}{*}{\\texttt{Probs}} & \\multirow{2}{*}{\\texttt{\\#}}"
@@ -994,7 +995,7 @@ function table3_begin() {
    print "\t \\small"
    print "\t\\centering"
    print "\t\\addtolength{\\tabcolsep}{-3pt}"
-   print "\t\\caption{Performance comparison of settings \\texttt{BASE+DB} and \\texttt{BASE+DB+OPF}.}"
+   print "\t\\caption{Performance comparison of \\texttt{BASE+DB} and \\texttt{BASE+DB+OPF}.}"
    print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}lrrrrrrrrrrrr@{\\extracolsep\\fill}}"
    print "\t\t\\toprule"
    print "\t\t\\multirow{2}{*}{\\texttt{Probs}} & \\multirow{2}{*}{\\texttt{\\#}} &"
@@ -1029,7 +1030,7 @@ function table4_begin() {
    print "\t \\small"
    print "\t\\centering"
    print "\t\\addtolength{\\tabcolsep}{-3pt}"
-   print "\t\\caption{Performance comparison of settings \\texttt{BASE+DB+OPF} and \\texttt{BASE+DB+EOPF}.}"
+   print "\t\\caption{Performance comparison of \\texttt{BASE+DB+OPF} and \\texttt{BASE+DB+EOPF}.}"
    print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}lrrrrrrrrrrrrr@{\\extracolsep\\fill}}"
    print "\t\t\\toprule"
    print "\t\t\\multirow{2}{*}{\\texttt{Probs}} & \\multirow{2}{*}{\\texttt{\\#}} &"
@@ -1177,7 +1178,7 @@ function table5_begin() {
    print "\\begin{table}[htbp]"
    print "\t\\small"
    print "\t\\centering"
-   print "\t\\caption{Performance comparison of settings \\texttt{BASE}, \\texttt{BASE+sDI}, \\texttt{BASE+DB}, and \\texttt{BASE+DB+OPF} with different dimensions $m$ of the random vector $\\xi$ on the \\texttt{CCMPP} instances.}"
+   print "\t\\caption{Performance comparison of \\texttt{BASE}, \\texttt{BASE+sDI}, \\texttt{BASE+DB}, and \\texttt{BASE+DB+OPF} with different dimensions $m$ of the random vector $\\xi$ on the \\texttt{CCMPP} instances.}"
    print "\t\\addtolength{\\tabcolsep}{1pt}"
    print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}llrrrrrr@{\\extracolsep\\fill}}"
    print "\t\t\\toprule"
@@ -1392,13 +1393,13 @@ function g_print_metric(j) {
       printf(" & %d", round(outnodes[j]))
 }
 
-function table6_eps_allowed(family, eps) {
+function tableB1_eps_allowed(family, eps) {
    if (family == "CCRP")
       return same(eps, 0.10) || same(eps, 0.15) || same(eps, 0.20)
    return same(eps, 0.05) || same(eps, 0.10) || same(eps, 0.20)
 }
 
-function table6_aggregate(probfilter, targeteps,   i, j, p, family, gbase, gsdi, sopf, anyok, key, data, node_data) {
+function tableB1_aggregate(probfilter, targeteps,   i, j, p, family, gbase, gsdi, sopf, anyok, key, data, node_data) {
    rown = 0
    for (j = 1; j <= 3; ++j) {
       rowsolved[j] = 0
@@ -1411,7 +1412,7 @@ function table6_aggregate(probfilter, targeteps,   i, j, p, family, gbase, gsdi,
       family = g_probtype[p]
       if (probfilter != "All" && family != probfilter)
          continue
-      if (!table6_eps_allowed(family, g_epsvalue[p]))
+      if (!tableB1_eps_allowed(family, g_epsvalue[p]))
          continue
       if (targeteps != "All" && !same(g_epsvalue[p], targeteps))
          continue
@@ -1420,7 +1421,7 @@ function table6_aggregate(probfilter, targeteps,   i, j, p, family, gbase, gsdi,
 
       gbase = p SUBSEP "BASE"
       gsdi = p SUBSEP "BASE+sDI"
-      sopf = p SUBSEP "DB-OPF@14400-table6"
+      sopf = p SUBSEP "DB-OPF@14400-tableB1"
       if (g_probfile[gbase] != 1 || g_probfile[gsdi] != 1 || probfile[sopf] != 1)
          continue
 
@@ -1479,13 +1480,14 @@ function table6_aggregate(probfilter, targeteps,   i, j, p, family, gbase, gsdi,
    compute_best(3)
 }
 
-function table6_begin() {
+function tableB1_begin() {
    print "\\begin{table}[htbp]"
+   print "\t\\renewcommand{\\thetable}{B1}"
    print "\t\\small"
    print "\t\\centering"
    print "\t\\renewcommand{\\arraystretch}{0.9}"
    print "\t\\addtolength{\\tabcolsep}{-1pt}"
-   print "\t\\caption{Performance comparison of settings \\texttt{G-BASE}, \\texttt{G-BASE+sDI}, and \\texttt{BASE+DB+OPF}.}"
+   print "\t\\caption{Performance comparison of \\texttt{G-BASE}, \\texttt{G-BASE+sDI}, and \\texttt{BASE+DB+OPF}.}"
    print "\t\\begin{tabular*}{\\textwidth}{@{\\extracolsep\\fill}llrrrrrrrrrr@{\\extracolsep\\fill}}"
    print "\t\t\\toprule"
    print "\t\t\\multirow{2}{*}{\\texttt{Probs}} & \\multirow{2}{*}{$\\epsilon$} & \\multirow{2}{*}{\\texttt{\\#}}"
@@ -1495,15 +1497,15 @@ function table6_begin() {
    print "\t\t\\midrule"
 }
 
-function table6_end() {
+function tableB1_end() {
    print "\t\t\\bottomrule"
    print "\t\\end{tabular*}"
    print "\t\\label{gurobi-scip-three-problems}"
    print "\\end{table}"
 }
 
-function print_table6_row(probfilter, targeteps, firstrow, problabel, epslabel) {
-   table6_aggregate(probfilter, targeteps)
+function print_tableB1_row(probfilter, targeteps, firstrow, problabel, epslabel) {
+   tableB1_aggregate(probfilter, targeteps)
    if (probfilter == "All")
       problabel = label_prob(probfilter)
    else
@@ -1522,39 +1524,39 @@ function print_table6_row(probfilter, targeteps, firstrow, problabel, epslabel) 
    finish_row()
 }
 
-function print_table6_problem(probfilter,   epslist, neps, e) {
+function print_tableB1_problem(probfilter,   epslist, neps, e) {
    if (probfilter == "CCRP")
       neps = split("0.10 0.15 0.20", epslist, " ")
    else
       neps = split("0.05 0.10 0.20", epslist, " ")
 
    for (e = 1; e <= neps; ++e)
-      print_table6_row(probfilter, epslist[e] + 0, e == 1)
+      print_tableB1_row(probfilter, epslist[e] + 0, e == 1)
    if (!rows_only)
       print "\t\t\\cmidrule{2-12}"
-   print_table6_row(probfilter, "All", 0)
+   print_tableB1_row(probfilter, "All", 0)
 }
 
-function print_table6() {
+function print_tableB1() {
    if (!rows_only)
-      table6_begin()
+      tableB1_begin()
    else
-      print "% Table 6"
+      print "% Table B1"
 
    if (prob != "" && prob != "All")
-      print_table6_problem(prob)
+      print_tableB1_problem(prob)
    else {
-      print_table6_problem("CCRP")
+      print_tableB1_problem("CCRP")
       if (!rows_only)
          print "\t\t\\midrule"
-      print_table6_problem("CCMPP")
+      print_tableB1_problem("CCMPP")
       if (!rows_only)
          print "\t\t\\midrule"
-      print_table6_problem("CCLS")
+      print_tableB1_problem("CCLS")
    }
 
    if (!rows_only)
-      table6_end()
+      tableB1_end()
 }
 
 function ratio(a, b) {
@@ -1664,14 +1666,14 @@ function g_detail_key_available(key) {
    return (key in g_badfile)
 }
 
-function collect_detail_table6_rows(probfilter,   i, prob, family, gbase, gsdi, sopf) {
+function collect_detail_tableB1_rows(probfilter,   i, prob, family, gbase, gsdi, sopf) {
    detailrows = 0
    for (i = 1; i <= g_probnum; ++i) {
       prob = g_problist[i]
       family = g_probtype[prob]
       if (family != probfilter)
          continue
-      if (!table6_eps_allowed(family, g_epsvalue[prob]))
+      if (!tableB1_eps_allowed(family, g_epsvalue[prob]))
          continue
       if (family == "CCMPP" && !ccmpp_main_dimension(g_mvalue[prob]))
          continue
@@ -1680,7 +1682,7 @@ function collect_detail_table6_rows(probfilter,   i, prob, family, gbase, gsdi, 
 
       gbase = prob SUBSEP "BASE"
       gsdi = prob SUBSEP "BASE+sDI"
-      sopf = prob SUBSEP "DB-OPF@14400-table6"
+      sopf = prob SUBSEP "DB-OPF@14400-tableB1"
       if (!g_detail_key_available(gbase) || !g_detail_key_available(gsdi) || !detail_key_available(sopf))
          continue
 
@@ -1859,16 +1861,16 @@ function prob_text(prob) {
 function detail_caption(kind, probfilter, p) {
    p = prob_text(probfilter)
    if (kind == "one")
-      return "Detailed computational results of settings \\texttt{BASE+DB}, \\texttt{BASE+sDI}, and \\texttt{BASE+DI} on the instances in testset " p "."
+      return "Detailed computational results of \\texttt{BASE+DB}, \\texttt{BASE+sDI}, and \\texttt{BASE+DI} on the instances in testset " p "."
    if (kind == "two")
-      return "Detailed computational results of settings \\texttt{BASE+DB} and \\texttt{BASE+DB+OPF} on the instances in testset " p "."
+      return "Detailed computational results of \\texttt{BASE+DB} and \\texttt{BASE+DB+OPF} on the instances in testset " p "."
    if (kind == "three")
-      return "Detailed computational results of settings \\texttt{BASE+DB+OPF} and \\texttt{BASE+DB+EOPF} on the instances in testset " p ". ``--\" under column \\texttt{PT} denotes that the instance was not solved within 24 hours."
+      return "Detailed computational results of \\texttt{BASE+DB+OPF} and \\texttt{BASE+DB+EOPF} on the instances in testset " p ". ``--\" under column \\texttt{PT} denotes that the instance was not solved within 24 hours."
    if (kind == "four")
-      return "Detailed computational results of settings \\texttt{BASE}, \\texttt{BASE+DI}, and \\texttt{BASE+DB+OPF} on the instances in testset " p "."
+      return "Detailed computational results of \\texttt{BASE}, \\texttt{BASE+DI}, and \\texttt{BASE+DB+OPF} on the instances in testset " p "."
    if (kind == "six")
-      return "Detailed computational results of settings \\tblGBASE, \\tblGSDI, and \\tblPBS on the instances in testset " p "."
-   return "Detailed computational results of settings \\texttt{BASE}, \\texttt{BASE+sDI}, \\texttt{BASE+DB}, and \\texttt{BASE+DB+OPF} on the instances in testset \\texttt{CCMPP}."
+      return "Detailed computational results of \\tblGBASE, \\tblGSDI, and \\tblPBS on the instances in testset " p "."
+   return "Detailed computational results of \\texttt{BASE}, \\texttt{BASE+sDI}, \\texttt{BASE+DB}, and \\texttt{BASE+DB+OPF} on the instances in testset \\texttt{CCMPP}."
 }
 
 function detail_stretch(kind, probfilter) {
@@ -2061,7 +2063,7 @@ function detail_six_begin(probfilter, s) {
 }
 
 function print_detail_six(probfilter,   r, prob) {
-   collect_detail_table6_rows(probfilter)
+   collect_detail_tableB1_rows(probfilter)
    detail_six_begin(probfilter)
    detail_printed = 0
    for (r = 1; r <= detailrows; ++r) {
@@ -2069,7 +2071,7 @@ function print_detail_six(probfilter,   r, prob) {
       detail_row_start(prob, 10)
       g_detail_time_node(prob, "BASE", gurobi_timelimit)
       g_detail_time_node(prob, "BASE+sDI", gurobi_timelimit)
-      detail_time_node(prob, "DB-OPF@14400-table6", timelimit)
+      detail_time_node(prob, "DB-OPF@14400-tableB1", timelimit)
       print " \\\\"
    }
    detail_common_end()
@@ -2107,7 +2109,7 @@ function print_detail_tables() {
    print "% 5.4"
    print_detail_testm()
    print ""
-   print "% Table 6"
+   print "% Table B1"
    print_detail_six("CCRP")
    print ""
    print_detail_six("CCMPP")
@@ -2122,7 +2124,7 @@ END {
    if (fatal)
       exit 2
 
-   if ((table == "6" || table == "s-all") && g_probnum > 0) {
+   if ((table == "B1" || table == "s-all") && g_probnum > 0) {
       if (g_check_optimal_objectives() > 0)
          exit 3
    }
@@ -2137,8 +2139,8 @@ END {
       print_table4()
    else if (table == "5")
       print_table5()
-   else if (table == "6")
-      print_table6()
+   else if (table == "B1")
+      print_tableB1()
    else if (table == "d-all" || detail)
       print_detail_tables()
    else {
@@ -2153,7 +2155,7 @@ END {
       print_table5()
       if (g_probnum > 0 && probnum > 0) {
          print ""
-         print_table6()
+         print_tableB1()
       }
    }
 

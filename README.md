@@ -106,7 +106,7 @@ To generate the commands for running the computational experiments in a given ta
 ```bash
 bash scripts/gen_commands.sh TABLE=<T> TABLE<T>.sh
 ```
-where `<T>` is chosen from `{1, 2, 3, 4, 5, 6}` and denotes the table number, and `TABLE<T>.sh` denotes the shell script to which the generated commands are written. The generated script can then be run using `bash TABLE<T>.sh` to execute the experiments of Table T.
+where `<T>` is chosen from `{1, 2, 3, 4, 5, B1}` and denotes the table number, and `TABLE<T>.sh` denotes the shell script to which the generated commands are written. The generated script can then be run using `bash TABLE<T>.sh` to execute the experiments of Table T.
 
 ### 🔁 Replicating
 To reproduce the computational results presented in the paper and the Online Supplement, please run
@@ -114,7 +114,7 @@ To reproduce the computational results presented in the paper and the Online Sup
 ```bash
 awk -f scripts/CCP.awk -v ResultSCIP=results-scip -v ResultGurobi=results-gurobi -v table=<F> > <output-file>
 ```
-where `<F>` is chosen from `{s-all, d-all}` and `<output-file>` denotes the file to which the generated LaTeX source code is written. Here, `s-all` generates all summary Tables 1--6 of the paper and `d-all` generates the detailed instance-wise tables in the Online Supplement.
+where `<F>` is chosen from `{s-all, d-all}` and `<output-file>` denotes the file to which the generated LaTeX source code is written. Here, `s-all` generates Tables 1--5 and Table B1 of the paper and `d-all` generates the detailed instance-wise tables in the Online Supplement.
 <!-- The generated tables can be used with the [Springer Nature LaTeX template](https://www.springernature.com/gp/authors/campaigns/latex-author-support). -->
 
 ### 📊 Detailed computational results

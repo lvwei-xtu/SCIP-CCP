@@ -4,7 +4,7 @@
 
 ### 📖 Description
 
-This directory contains the Julia implementation used to compare the proposed approaches with [Gurobi](https://www.gurobi.com/) (with the mixing cuts of Luedtke et al. (2010)) as reported in Table 6 of the paper **"Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side"**.
+This directory contains the Julia implementation used to compare the proposed approaches with [Gurobi](https://www.gurobi.com/) (with the mixing cuts of Luedtke et al. (2010)) as reported in Table B1 in Appendix B of the paper **"Exploiting Overlap Information in Chance-constrained Program with Random Right-hand Side"**.
 
 In particular, we compare the following two settings:
 
@@ -42,7 +42,7 @@ Here:
 - `<E>` encodes the value of $\epsilon$: for CCMPP and CCLS, `05`, `1`, and `2` correspond to $\epsilon=0.05$, $0.1$, and $0.2$, respectively; for CCRP, `1`, `15`, and `2` correspond to $\epsilon=0.1$, $0.15$, and $0.2$, respectively; and
 - `<filename>` denotes the name of an instance in the corresponding data directory.
 
-For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` with $\epsilon=0.05$ under the two settings reported in Table 6:
+For example, the following commands solve the CCMPP instance `10-1000-0.ccmpp` with $\epsilon=0.05$ under the two settings reported in Table B1:
 
 ```bash
 # setting G-BASE
